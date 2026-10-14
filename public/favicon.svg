@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- A toolbox: an orange handle and catch, and a body that's near-black on
+       light tab bars and white on dark ones. Made by scripts/make-images.ts. -->
+  <style>
+    .ink { stroke: #18181b; }
+    @media (prefers-color-scheme: dark) {
+      .ink { stroke: #fafafa; }
+    }
+  </style>
+  <g fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -0.5)">
+    <path d="M11.5 12V8.5a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2V12" stroke="#ea580c" />
+    <rect x="4" y="12" width="24" height="15" rx="3" class="ink" />
+    <path d="M4 18.5h24" class="ink" />
+    <path d="M16 17v3.5" stroke="#ea580c" />
+  </g>
+</svg>

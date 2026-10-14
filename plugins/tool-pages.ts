@@ -1,7 +1,13 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { Plugin } from 'vite'
-import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '../src/site.ts'
+import {
+  HEADLINE,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_URL,
+  TAGLINE,
+} from '../src/site.ts'
 import { tools } from '../src/tools/registry.ts'
 import type { ToolManifest } from '../src/tools/types.ts'
 
@@ -44,7 +50,13 @@ export function headTags({ path, title, description }: PageMeta) {
     `<meta property="og:url" content="${url}" />`,
     `<meta property="og:title" content="${escape(title)}" />`,
     `<meta property="og:description" content="${escape(description)}" />`,
-    `<meta name="twitter:card" content="summary" />`,
+    // One preview image for every page for now (scripts/make-images.ts).
+    `<meta property="og:image" content="${escape(`${SITE_URL}/og-image.png`)}" />`,
+    `<meta property="og:image:type" content="image/png" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
+    `<meta property="og:image:alt" content="${escape(`${SITE_NAME}: ${HEADLINE} ${TAGLINE}`)}" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
   ].join('\n    ')
 }
 

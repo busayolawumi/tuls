@@ -3,9 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- An empty icon, so browsers don't ask for /favicon.ico (a 404) until
-         Tuls has a real one. -->
-    <link rel="icon" href="data:," />
+    <!-- The PNG is for browsers that can't show SVG icons; the rest use the
+         SVG. All three are made by scripts/make-images.ts. -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <!-- The page's title, description and link preview. The build fills this
          in for each page (plugins/tool-pages.ts). -->
     <!-- page:start -->
