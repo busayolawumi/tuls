@@ -15,13 +15,30 @@ import type { ToolManifest } from '../src/tools/types.ts'
 // search engines read a page's <head> before any JavaScript runs. So the
 // build writes one HTML file per tool, each with its own title, description
 // and preview tags, between the page:start and page:end markers in index.html.
+//
+// Every real page is a file, so the host needs no catch-all rule. Any other
+// address gets 404.html with a real 404 status, and the app inside it shows
+// the "Page not found" page.
 
-export type PageMeta = { path: string; title: string; description: string }
+export type PageMeta = {
+  path: string
+  title: string
+  description: string
+  /** Keeps the page out of search results, and leaves out the preview tags. */
+  noindex?: boolean
+}
 
 export const homePage: PageMeta = {
   path: '/',
   title: SITE_NAME,
   description: SITE_DESCRIPTION,
+}
+
+export const notFoundPage: PageMeta = {
+  path: '/404',
+  title: `Page not found · ${SITE_NAME}`,
+  description: SITE_DESCRIPTION,
+  noindex: true,
 }
 
 export function toolPage(tool: ToolManifest): PageMeta {
@@ -39,8 +56,15 @@ const escape = (text: string) =>
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
 
-export function headTags({ path, title, description }: PageMeta) {
+export function headTags({ path, title, description, noindex }: PageMeta) {
   const url = escape(SITE_URL + path)
+  if (noindex) {
+    return [
+      `<title>${escape(title)}</title>`,
+      `<meta name="description" content="${escape(description)}" />`,
+      `<meta name="robots" content="noindex" />`,
+    ].join('\n    ')
+  }
   return [
     `<title>${escape(title)}</title>`,
     `<meta name="description" content="${escape(description)}" />`,
@@ -82,7 +106,8 @@ export function toolPages(): Plugin {
     transformIndexHtml: (html) => withHead(html, homePage),
     // After the build, a copy of the home page for each tool, with its tags:
     // video-to-gif.html, served at /video-to-gif (vercel.json's cleanUrls, and
-    // `vite preview` looks for .html files too).
+    // `vite preview` looks for .html files too). Plus 404.html for everything
+    // else.
     async writeBundle({ dir }) {
       if (!dir) return
       const index = await readFile(join(dir, 'index.html'), 'utf8')
@@ -92,6 +117,7 @@ export function toolPages(): Plugin {
           withHead(index, toolPage(tool)),
         )
       }
+      await writeFile(join(dir, '404.html'), withHead(index, notFoundPage))
     },
   }
 }
