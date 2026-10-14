@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Link, Outlet, ScrollRestoration, useLocation } from 'react-router'
+import { SOURCE_URL } from '../site.ts'
 
 // The frame around every page: wordmark, the page itself, and the footer.
 function Layout() {
@@ -39,10 +40,17 @@ function Layout() {
 function Footer() {
   const link =
     'underline-offset-2 hover:text-zinc-900 hover:underline dark:hover:text-zinc-100'
+  // Tuls is AGPL and sends FFmpeg (GPL) to every visitor, so both licences
+  // and their source must be easy to find. /licences.txt has the notices and
+  // the full GPL text; GitHub has Tuls's own source.
   return (
     <footer className="pt-8 text-center text-xs text-zinc-500 dark:text-zinc-400">
-      <a className={link} href="https://github.com/busayolawumi/tuls">
+      <a className={link} href={SOURCE_URL}>
         GitHub
+      </a>
+      {' · '}
+      <a className={link} href="/licences.txt">
+        Licences
       </a>
     </footer>
   )

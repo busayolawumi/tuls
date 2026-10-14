@@ -1,7 +1,9 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, statSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import { toolPages } from './plugins/tool-pages.ts'
 
 // The live site's headers (privacy policy, cross-origin isolation and so on)
 // live in vercel.json. `vite preview` sends the same ones, so the browser
@@ -17,8 +19,24 @@ const siteHeaders = Object.fromEntries(
     .headers.map(({ key, value }) => [key, value]),
 )
 
+// The FFmpeg engine's real size, for the first-visit download percentage. The
+// host compresses the file on the way, so the download itself doesn't say how
+// big it is.
+const ffmpegWasmSize = statSync(
+  fileURLToPath(import.meta.resolve('@ffmpeg/core/wasm')),
+).size
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), toolPages()],
+  define: {
+    __FFMPEG_WASM_SIZE__: JSON.stringify(ffmpegWasmSize),
+  },
+  // Pre-bundling breaks the worker that ffmpeg.wasm starts.
+  optimizeDeps: {
+    exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util'],
+  },
+  // ffmpeg.wasm starts its worker as a module and loads the core with import().
+  worker: { format: 'es' },
   preview: { headers: siteHeaders },
 })
