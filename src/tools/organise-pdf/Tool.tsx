@@ -1,7 +1,8 @@
-import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { useCallback, useEffect, useState } from 'react'
 import { FileDrop } from '../../components/FileDrop'
 import { FileResult } from '../../components/FileResult'
+import { useOnePdf } from '../../components/pdf/useOnePdf'
+import { usePagePictures } from '../../components/pdf/usePagePictures'
 import { organisePdfInBackground } from '../../engines/pdf/client'
 import {
   PDF_ERROR_MESSAGES,
@@ -15,8 +16,8 @@ import {
   outputName,
   pagesLabel,
 } from '../../engines/pdf/files'
-import { closePdf, openPdf } from '../../engines/pdf/pdfjs'
 import { formatSize } from '../../lib/format'
+import { useIgnoreFileDrops } from '../../lib/useIgnoreFileDrops'
 import { useTitle } from '../../lib/useTitle'
 import {
   MAX_PAGES,
@@ -31,13 +32,11 @@ import {
 } from './lib/pages'
 import { manifest } from './manifest'
 import { PageGrid } from './PageGrid'
-import { usePagePictures } from './usePagePictures'
 
 // Thumbnails fit a box about 150px square; drawn at twice that for sharp
 // screens.
 const PICTURE_SIZE = 300
 
-type Opened = { file: File; doc: PDFDocumentProxy }
 type Saved = { blob: Blob; url: string; name: string; pages: number }
 
 const SAVE_ERRORS: Record<PdfErrorKind, string> = {
@@ -50,9 +49,13 @@ const SAVE_ERRORS: Record<PdfErrorKind, string> = {
 
 function OrganisePdf() {
   useTitle(`${manifest.name} · Tuls`)
-  const [opened, setOpened] = useState<Opened>()
-  const [opening, setOpening] = useState(false)
-  const [openError, setOpenError] = useState<string>()
+  const {
+    opened,
+    opening,
+    error: openError,
+    open,
+    close,
+  } = useOnePdf(MAX_PAGES, manifest.name)
   const [pages, setPages] = useState<Page[]>([])
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<PdfErrorKind>()
@@ -61,36 +64,15 @@ function OrganisePdf() {
   const [announcement, setAnnouncement] = useState('')
   const { pictures, want, unwant } = usePagePictures(opened?.doc, PICTURE_SIZE)
 
-  // pdf.js keeps the open PDF in memory until it's closed.
-  useEffect(() => {
-    const doc = opened?.doc
-    return () => {
-      if (doc) void closePdf(doc)
-    }
-  }, [opened])
-
-  const handleFiles = useCallback(async ([file]: File[]) => {
-    setOpening(true)
-    setOpenError(undefined)
-    try {
-      const doc = await openPdf(await file.arrayBuffer())
-      if (doc.numPages > MAX_PAGES) {
-        void closePdf(doc)
-        setOpenError(
-          `This PDF has ${doc.numPages.toLocaleString()} pages. Organise PDF works with up to ${MAX_PAGES}.`,
-        )
-        return
-      }
-      setOpened({ file, doc })
-      setPages(startingPages(doc.numPages))
+  const handleFiles = useCallback(
+    async ([file]: File[]) => {
+      const pdf = await open(file)
+      if (!pdf) return
+      setPages(startingPages(pdf.doc.numPages))
       setSaveError(undefined)
-    } catch (e) {
-      console.warn(`Couldn't open ${file.name}:`, e)
-      setOpenError(PDF_ERROR_MESSAGES[pdfErrorKind(e)])
-    } finally {
-      setOpening(false)
-    }
-  }, [])
+    },
+    [open],
+  )
 
   const handleMove = useCallback((id: string, to: string) => {
     setPages((current) => movePage(current, id, to))
@@ -150,7 +132,7 @@ function OrganisePdf() {
 
   function handleStartOver() {
     handleBack()
-    setOpened(undefined)
+    close()
     setPages([])
     setSaveError(undefined)
     setAnnouncement('')
@@ -163,19 +145,8 @@ function OrganisePdf() {
   }, [screen])
 
   // Past the first screen there's no drop zone, so a file dropped by mistake
-  // would make the browser open it instead, losing the changes. Ignore it.
-  useEffect(() => {
-    if (screen === 'pick') return
-    const ignore = (e: DragEvent) => {
-      if (e.dataTransfer?.types.includes('Files')) e.preventDefault()
-    }
-    window.addEventListener('dragover', ignore)
-    window.addEventListener('drop', ignore)
-    return () => {
-      window.removeEventListener('dragover', ignore)
-      window.removeEventListener('drop', ignore)
-    }
-  }, [screen])
+  // would be opened by the browser, losing the changes.
+  useIgnoreFileDrops(screen !== 'pick')
 
   // The result's preview: the first kept page, turned as it will be.
   const first = pages.find((page) => !page.deleted)
@@ -302,7 +273,7 @@ function OrganisePdf() {
                 disabled={plan.length === 0 || saving}
                 aria-busy={saving}
                 onClick={handleSave}
-                className="shrink-0 rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+                className="shrink-0 rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
               >
                 {saving ? 'Saving…' : 'Save PDF'}
               </button>

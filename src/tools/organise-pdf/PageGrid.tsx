@@ -17,9 +17,11 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { memo, useCallback, useEffect, useRef, useState } from 'react'
+import { memo, useRef, useState } from 'react'
+import { PageThumb } from '../../components/pdf/PageThumb'
+import type { Pictures } from '../../components/pdf/usePagePictures'
+import { useWatchPages } from '../../components/pdf/useWatchPages'
 import type { Page } from './lib/pages'
-import type { Pictures } from './usePagePictures'
 
 // The pages as a grid of cards. Each can be dragged to a new place (mouse,
 // touch, or keyboard: Space, the arrow keys, Space), turned, or marked to be
@@ -64,39 +66,7 @@ export function PageGrid({
     () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   )
 
-  // One watcher for every card's thumbnail. Cards sign up their thumbnails
-  // as they appear; the watcher is remade when want/unwant change (another
-  // PDF), and picks up every signed-up thumbnail again.
-  const watched = useRef(new Set<HTMLElement>())
-  const watcher = useRef<IntersectionObserver>(undefined)
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          const index = Number((entry.target as HTMLElement).dataset.index)
-          if (entry.isIntersecting) want(index)
-          else unwant(index)
-        }
-      },
-      // Start drawing a little before a page scrolls into view.
-      { rootMargin: '400px 0px' },
-    )
-    for (const element of watched.current) observer.observe(element)
-    watcher.current = observer
-    return () => {
-      observer.disconnect()
-      watcher.current = undefined
-    }
-  }, [want, unwant])
-  const watch = useCallback((element: HTMLElement | null) => {
-    if (!element) return
-    watched.current.add(element)
-    watcher.current?.observe(element)
-    return () => {
-      watched.current.delete(element)
-      watcher.current?.unobserve(element)
-    }
-  }, [])
+  const watch = useWatchPages(want, unwant)
 
   // What screen readers hear while a page is being moved.
   const name = (id: UniqueIdentifier) =>
@@ -230,31 +200,13 @@ const PageCard = memo(function PageCard({
         aria-label={[`Page ${number}`, ...state].join(', ')}
         className="relative aspect-square cursor-grab touch-manipulation rounded-t-lg select-none [-webkit-touch-callout:none] active:cursor-grabbing"
       >
-        {/* A fixed square, so a page fits inside it whichever way it's
-            turned, and every card is the same size. */}
-        <div
-          ref={watch}
-          data-index={page.index}
-          className="absolute inset-0 flex items-center justify-center p-3"
-        >
-          {picture ? (
-            <img
-              src={picture}
-              alt=""
-              draggable={false}
-              style={{ transform: `rotate(${page.turn}deg)` }}
-              className={`max-h-full max-w-full border border-zinc-200 shadow-sm motion-safe:transition-transform dark:border-zinc-700 ${
-                page.deleted ? 'opacity-25 grayscale' : ''
-              }`}
-            />
-          ) : (
-            <span
-              className={`aspect-[3/4] h-full rounded-sm bg-zinc-100 dark:bg-zinc-900 ${
-                picture === undefined ? 'motion-safe:animate-pulse' : ''
-              }`}
-            />
-          )}
-        </div>
+        <PageThumb
+          index={page.index}
+          picture={picture}
+          watch={watch}
+          turn={page.turn}
+          faded={page.deleted}
+        />
         {page.deleted && (
           <span className="pointer-events-none absolute inset-x-0 top-1/2 mx-auto w-fit -translate-y-1/2 rounded bg-zinc-900 px-2 py-0.5 text-xs font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
             Deleted

@@ -1,6 +1,7 @@
 import { PdfError, pdfErrorKind } from './errors'
 import type { PagePlan } from './organise'
-import type { WorkerRequest, WorkerResponse } from './worker'
+import type { SplitPart, SplitResult } from './split'
+import type { WorkerRequest, WorkerResponse, WorkerResult } from './worker'
 
 // Talks to the PDF worker. It's started the first time it's needed and kept
 // for later jobs.
@@ -9,7 +10,7 @@ let worker: Worker | undefined
 let lastId = 0
 const pending = new Map<
   number,
-  { resolve: (result: Uint8Array) => void; reject: (error: unknown) => void }
+  { resolve: (result: WorkerResult) => void; reject: (error: unknown) => void }
 >()
 
 function getWorker() {
@@ -39,23 +40,31 @@ function getWorker() {
 }
 
 /** Sends a job to the worker. The `transfer` buffers are handed over, not copied. */
-function run(
+function run<T extends WorkerResult>(
   request: (id: number) => WorkerRequest,
   transfer: ArrayBuffer[],
-): Promise<Uint8Array> {
+): Promise<T> {
   return new Promise((resolve, reject) => {
     const id = ++lastId
-    pending.set(id, { resolve, reject })
+    pending.set(id, {
+      resolve: resolve as (result: WorkerResult) => void,
+      reject,
+    })
     getWorker().postMessage(request(id), transfer)
   })
 }
 
 /** Merges PDFs in the background. The buffers are handed over, not copied. */
 export function mergePdfsInBackground(files: ArrayBuffer[]) {
-  return run((id) => ({ id, op: 'merge', files }), files)
+  return run<Uint8Array>((id) => ({ id, op: 'merge', files }), files)
 }
 
 /** Organises a PDF's pages in the background. The buffer is handed over. */
 export function organisePdfInBackground(file: ArrayBuffer, plan: PagePlan[]) {
-  return run((id) => ({ id, op: 'organise', file, plan }), [file])
+  return run<Uint8Array>((id) => ({ id, op: 'organise', file, plan }), [file])
+}
+
+/** Splits a PDF into parts (plus a ZIP of them) in the background. */
+export function splitPdfInBackground(file: ArrayBuffer, parts: SplitPart[]) {
+  return run<SplitResult>((id) => ({ id, op: 'split', file, parts }), [file])
 }

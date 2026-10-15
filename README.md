@@ -9,6 +9,7 @@ Work in progress.
 - **Video to GIF**: trim, crop and turn a video into a GIF. It started as [Gify](https://github.com/busayolawumi/gify).
 - **Merge PDFs**: combine several PDFs into one, in the order you choose.
 - **Organise PDF**: reorder, rotate and delete the pages of a PDF.
+- **Split PDF**: split a PDF into several smaller ones, at the pages you choose.
 
 ## Development
 
