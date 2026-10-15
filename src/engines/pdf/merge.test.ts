@@ -112,6 +112,21 @@ describe('mergePdfs', () => {
     expect(error.kind).toBe('unreadable')
   })
 
+  it('merges PDFs locked only against changes, and drops the lock', async () => {
+    // Like many bank statements: they open without a password.
+    const locked = await makePdf(2, [300, 400], (doc) =>
+      doc.encrypt({
+        userPassword: '',
+        ownerPassword: 'owner',
+        permissions: { modifying: false },
+      }),
+    )
+    const merged = await mergePdfs([locked, await makePdf(1, [500, 500])])
+    const doc = await PDFDocument.load(merged)
+    expect(doc.isEncrypted).toBe(false)
+    expect(sizes(doc)).toEqual(['300x400', '300x400', '500x500'])
+  })
+
   it('says when a PDF has a password', async () => {
     const locked = await makePdf(1, [300, 400], (doc) =>
       doc.encrypt({ userPassword: 'secret', ownerPassword: 'owner' }),

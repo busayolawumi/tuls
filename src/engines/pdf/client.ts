@@ -1,4 +1,5 @@
 import { PdfError, pdfErrorKind } from './errors'
+import type { PagePlan } from './organise'
 import type { WorkerRequest, WorkerResponse } from './worker'
 
 // Talks to the PDF worker. It's started the first time it's needed and kept
@@ -37,14 +38,24 @@ function getWorker() {
   return worker
 }
 
-/** Merges PDFs in the background. The buffers are handed over, not copied. */
-export function mergePdfsInBackground(
-  files: ArrayBuffer[],
+/** Sends a job to the worker. The `transfer` buffers are handed over, not copied. */
+function run(
+  request: (id: number) => WorkerRequest,
+  transfer: ArrayBuffer[],
 ): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
     const id = ++lastId
     pending.set(id, { resolve, reject })
-    const request: WorkerRequest = { id, op: 'merge', files }
-    getWorker().postMessage(request, files)
+    getWorker().postMessage(request(id), transfer)
   })
+}
+
+/** Merges PDFs in the background. The buffers are handed over, not copied. */
+export function mergePdfsInBackground(files: ArrayBuffer[]) {
+  return run((id) => ({ id, op: 'merge', files }), files)
+}
+
+/** Organises a PDF's pages in the background. The buffer is handed over. */
+export function organisePdfInBackground(file: ArrayBuffer, plan: PagePlan[]) {
+  return run((id) => ({ id, op: 'organise', file, plan }), [file])
 }

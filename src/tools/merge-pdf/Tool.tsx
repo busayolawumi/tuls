@@ -7,17 +7,16 @@ import {
   pdfErrorKind,
   type PdfErrorKind,
 } from '../../engines/pdf/errors'
-import { closePdf, openPdf, pagePicture } from '../../engines/pdf/pdfjs'
-import { formatSize } from '../../lib/format'
-import { useTitle } from '../../lib/useTitle'
 import {
   ACCEPT,
   MAX_FILE_SIZE,
   checkPdf,
-  mergedFileName,
-  move,
   pagesLabel,
-} from './lib/files'
+} from '../../engines/pdf/files'
+import { closePdf, openPdf, pagePicture } from '../../engines/pdf/pdfjs'
+import { formatSize } from '../../lib/format'
+import { useTitle } from '../../lib/useTitle'
+import { mergedFileName, move } from './lib/files'
 import { manifest } from './manifest'
 
 // Thumbnails are shown 56px tall; drawn at twice that for sharp screens.

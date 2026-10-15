@@ -37,17 +37,20 @@ export function closePdf(doc: PDFDocumentProxy) {
 
 /**
  * Draws one page (numbered from 1) as a small JPEG, `height` pixels tall,
- * for thumbnails. Returns a data URL.
+ * for thumbnails. With `width` too, it fits inside that box instead, so wide
+ * pages aren't drawn bigger than needed. Returns a data URL.
  */
 export async function pagePicture(
   doc: PDFDocumentProxy,
   pageNumber: number,
   height: number,
+  width = Infinity,
 ): Promise<string> {
   const page = await doc.getPage(pageNumber)
   try {
     const base = page.getViewport({ scale: 1 })
-    const viewport = page.getViewport({ scale: height / base.height })
+    const scale = Math.min(height / base.height, width / base.width)
+    const viewport = page.getViewport({ scale })
     const canvas = document.createElement('canvas')
     canvas.width = Math.ceil(viewport.width)
     canvas.height = Math.ceil(viewport.height)
