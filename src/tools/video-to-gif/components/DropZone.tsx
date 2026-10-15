@@ -80,7 +80,7 @@ export function DropZone({ onFile }: Props) {
         <span className="font-medium">
           {/* Phones and tablets can't drag files, so just offer the picker. */}
           <span className="pointer-coarse:hidden">
-            Drop a video, or <span className="text-accent">browse</span>
+            Drop a video, or <span className="text-link">browse</span>
           </span>
           <span className="hidden pointer-coarse:inline">Choose a video</span>
         </span>

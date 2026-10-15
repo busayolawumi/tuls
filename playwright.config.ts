@@ -12,9 +12,10 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: `http://127.0.0.1:${port}`,
-    // Locally, use the installed Chrome instead of downloading a browser.
-    // CI installs Playwright's own Chromium.
-    channel: process.env.CI ? undefined : 'chrome',
+    // Google Chrome, not Playwright's own Chromium: Chromium can't play
+    // H.264 (MP4) video, which most real videos and the test video are.
+    // GitHub's Ubuntu runners have Chrome installed already.
+    channel: 'chrome',
   },
   projects: [
     {

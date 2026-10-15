@@ -14,6 +14,9 @@ const toolPages = import.meta.glob<{ default: ComponentType }>(
 export const router = createBrowserRouter([
   {
     element: <Layout />,
+    // Shown for the moment a tool's code is still loading on a direct visit.
+    // React Router shows nothing then anyway, but warns every time without it.
+    HydrateFallback: () => null,
     children: [
       {
         // Errors show inside the layout, so the wordmark and footer stay.

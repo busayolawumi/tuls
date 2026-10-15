@@ -17,9 +17,11 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run format:check
+      - run: npm test
       # Type-checks, then builds.
       - run: npm run build
-      - run: npx playwright install --with-deps chromium
+      # The browser tests use the Google Chrome that's on the runner already
+      # (see playwright.config.ts), so there's no browser to install.
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()
