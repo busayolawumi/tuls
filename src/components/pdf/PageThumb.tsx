@@ -10,12 +10,12 @@ export function PageThumb({
   turn = 0,
   faded = false,
 }: {
-  /** The page, numbered from 0. */
-  index: number
+  /** The page, numbered from 0, for `watch`. */
+  index?: number
   /** Not drawn yet (undefined), or couldn't be drawn (null). */
   picture: string | null | undefined
   /** From useWatchPages, so the picture is asked for near the screen. */
-  watch: (element: HTMLElement | null) => void
+  watch?: (element: HTMLElement | null) => void
   /** Degrees clockwise. */
   turn?: number
   /** Faded out, e.g. for a page that's going. */

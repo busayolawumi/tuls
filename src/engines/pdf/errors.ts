@@ -9,10 +9,11 @@ export class PdfError extends Error {
   }
 }
 
-// Matched against the names and messages of pdf.js and pdf-lib errors.
+// Matched against the names and messages of pdf.js and pdf-lib errors, and
+// of Tuls's own JPEG reader (lib/jpeg.ts).
 const PASSWORD = /PasswordException|EncryptedPDFError|is encrypted|password/i
 const UNREADABLE =
-  /InvalidPDFException|Invalid PDF|Failed to parse|No PDF header|Expected instance of|MissingPDFHeader|Unexpected (token|end)|bad XRef/i
+  /InvalidPDFException|Invalid PDF|Failed to parse|No PDF header|Expected instance of|MissingPDFHeader|Unexpected (token|end)|bad XRef|Not a JPEG|Damaged JPEG/i
 const MEMORY =
   /out of memory|Array buffer allocation failed|Invalid array length|RangeError: Maximum/i
 

@@ -1,4 +1,5 @@
 import { PdfError, pdfErrorKind } from './errors'
+import type { PageImage, PageSize } from './images'
 import type { PagePlan } from './organise'
 import type { SplitPart, SplitResult } from './split'
 import type { WorkerRequest, WorkerResponse, WorkerResult } from './worker'
@@ -67,4 +68,12 @@ export function organisePdfInBackground(file: ArrayBuffer, plan: PagePlan[]) {
 /** Splits a PDF into parts (plus a ZIP of them) in the background. */
 export function splitPdfInBackground(file: ArrayBuffer, parts: SplitPart[]) {
   return run<SplitResult>((id) => ({ id, op: 'split', file, parts }), [file])
+}
+
+/** Makes a PDF from images in the background. Their buffers are handed over. */
+export function imagesToPdfInBackground(images: PageImage[], size: PageSize) {
+  return run<Uint8Array>(
+    (id) => ({ id, op: 'images', images, size }),
+    images.map((image) => image.data),
+  )
 }

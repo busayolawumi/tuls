@@ -1,3 +1,4 @@
+import { moveTo } from '../../../components/sortable/moveTo'
 import { pagesLabel } from '../../../engines/pdf/files'
 import type { PagePlan } from '../../../engines/pdf/organise'
 
@@ -43,13 +44,7 @@ export function toggleDeleted(pages: Page[], id: string): Page[] {
 
 /** Moves page `id` to where page `to` is now. */
 export function movePage(pages: Page[], id: string, to: string): Page[] {
-  const from = pages.findIndex((page) => page.id === id)
-  const at = pages.findIndex((page) => page.id === to)
-  if (from < 0 || at < 0 || from === at) return pages
-  const next = [...pages]
-  const [page] = next.splice(from, 1)
-  next.splice(at, 0, page)
-  return next
+  return moveTo(pages, id, to)
 }
 
 /** What the new PDF is made of: the kept pages, in order, with their turns. */

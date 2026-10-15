@@ -10,6 +10,7 @@ Work in progress.
 - **Merge PDFs**: combine several PDFs into one, in the order you choose.
 - **Organise PDF**: reorder, rotate and delete the pages of a PDF.
 - **Split PDF**: split a PDF into several smaller ones, at the pages you choose.
+- **Images to PDF**: turn photos, scans and screenshots into one PDF, without their location and camera details.
 
 ## Development
 
