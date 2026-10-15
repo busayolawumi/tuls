@@ -1,45 +1,64 @@
-import { useMemo } from 'react'
+import { useState } from 'react'
+import { FileNameField } from '../../components/FileNameField'
 import type { Pictures } from '../../components/pdf/usePagePictures'
+import { download } from '../../lib/download'
+import { fileName } from '../../lib/fileName'
 import { formatSize } from '../../lib/format'
-import { partsLabel, rangeLabel } from './lib/parts'
+import { canShareFiles, shareFiles } from '../../lib/share'
+import { zipFiles } from '../../lib/zip'
+import { partName, partsLabel, rangeLabel, zipName } from './lib/parts'
 
-/** A finished file, ready to download. */
-export type Made = { name: string; blob: Blob; url: string }
-export type MadePart = Made & { pages: number[] }
+/** A new PDF: its pages (numbered from 0) and the file itself. */
+export type MadePart = { pages: number[]; blob: Blob; url: string }
 
 type Action = { label: string; onClick: () => void }
 
 type Props = {
   parts: MadePart[]
-  zip?: Made
+  /** What the files' names start with to begin with, e.g. "report". */
+  start: string
   pictures: Pictures
   back: Action
   startOver: Action
 }
 
-// The new PDFs: all of them at once (a ZIP, or Share where the browser can),
-// then each one with its first page, pages and size.
-export function PartsResult({ parts, zip, pictures, back, startOver }: Props) {
+// The new PDFs: one name for them all, then all of them at once (a ZIP, or
+// Share where the browser can), then each one with its first page, pages
+// and size.
+export function PartsResult({
+  parts,
+  start,
+  pictures,
+  back,
+  startOver,
+}: Props) {
+  const [typed, setTyped] = useState(start)
+  const base = fileName(typed, start)
+  const named = parts.map((part) => ({
+    ...part,
+    name: partName(base, part.pages),
+  }))
   const total = parts.reduce((sum, part) => sum + part.blob.size, 0)
+  const [shareable] = useState(() => canShareFiles('application/pdf'))
+  const [zipping, setZipping] = useState(false)
 
-  // Only some browsers (mostly on phones) can share files. Where they can't,
-  // the Share button doesn't appear.
-  const shareable = useMemo(() => {
-    const files = parts.map(
-      (part) => new File([part.blob], part.name, { type: 'application/pdf' }),
-    )
-    return navigator.canShare?.({ files }) ? files : undefined
-  }, [parts])
-
-  async function handleShare() {
-    if (!shareable) return
+  // The ZIP is made when it's asked for, so it has the names as they are
+  // then, and isn't kept in memory for nothing.
+  async function handleZip() {
+    setZipping(true)
     try {
-      await navigator.share({ files: shareable })
-    } catch (e) {
-      // Closing the share sheet counts as an error, but it isn't one.
-      if (!(e instanceof DOMException && e.name === 'AbortError')) {
-        console.error(e)
-      }
+      const files = await Promise.all(
+        named.map(async (part) => ({
+          name: part.name,
+          data: new Uint8Array(await part.blob.arrayBuffer()),
+        })),
+      )
+      download(
+        new Blob([zipFiles(files)], { type: 'application/zip' }),
+        zipName(base),
+      )
+    } finally {
+      setZipping(false)
     }
   }
 
@@ -52,21 +71,32 @@ export function PartsResult({ parts, zip, pictures, back, startOver }: Props) {
         {partsLabel(parts.length)} · {formatSize(total)}
       </p>
 
-      <div className="mt-4 flex justify-center gap-2">
-        {zip && (
-          <a
-            className="rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-            href={zip.url}
-            download={zip.name}
-          >
-            Download all (ZIP)
-          </a>
-        )}
+      <FileNameField value={typed} onChange={setTyped} label="File names" />
+
+      <div className="mt-6 flex justify-center gap-2">
+        <button
+          type="button"
+          disabled={zipping}
+          aria-busy={zipping}
+          onClick={handleZip}
+          className="rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        >
+          {zipping ? 'Zipping…' : 'Download all (ZIP)'}
+        </button>
         {shareable && (
           <button
             type="button"
             className="rounded-lg border border-zinc-300 px-4 py-2.5 text-sm transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-            onClick={handleShare}
+            onClick={() =>
+              shareFiles(
+                named.map(
+                  (part) =>
+                    new File([part.blob], part.name, {
+                      type: 'application/pdf',
+                    }),
+                ),
+              )
+            }
           >
             Share all
           </button>
@@ -77,11 +107,11 @@ export function PartsResult({ parts, zip, pictures, back, startOver }: Props) {
         aria-label="The new PDFs"
         className="mt-6 flex flex-col gap-2 text-left"
       >
-        {parts.map((part) => {
+        {named.map((part) => {
           const picture = pictures.get(part.pages[0])
           return (
             <li
-              key={part.name}
+              key={part.pages[0]}
               className="flex items-center gap-3 rounded-lg border border-zinc-200 p-2 dark:border-zinc-800"
             >
               {picture ? (

@@ -1,6 +1,7 @@
 import { PDFDocument } from '@cantoo/pdf-lib'
 import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
+import { readFile } from 'node:fs/promises'
 import { unzipSync } from 'fflate'
 
 // Test PDFs are made on the spot: blank pages told apart by their widths.
@@ -101,16 +102,24 @@ test('splits where chosen, as PDFs and a ZIP, without sending anything elsewhere
     await widthsOf(await bytesOf(page, (await second.getAttribute('href'))!)),
   ).toEqual([300, 400, 500])
 
-  const zip = page.getByRole('link', { name: 'Download all (ZIP)' })
-  await expect(zip).toHaveAttribute('download', 'report-split.zip')
-  const files = unzipSync(
-    await bytesOf(page, (await zip.getAttribute('href'))!),
-  )
-  expect(Object.keys(files)).toEqual([
-    'report-pages-1-2.pdf',
-    'report-pages-3-5.pdf',
+  // A new name for them all, then the ZIP, which is made on the click.
+  await page.getByRole('textbox', { name: 'File names' }).fill('Statements')
+  await expect(
+    page.getByRole('link', { name: 'Download Statements-pages-1-2.pdf' }),
+  ).toHaveAttribute('download', 'Statements-pages-1-2.pdf')
+  const [zip] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Download all (ZIP)' }).click(),
   ])
-  expect(await widthsOf(files['report-pages-3-5.pdf'])).toEqual([300, 400, 500])
+  expect(zip.suggestedFilename()).toBe('Statements.zip')
+  const files = unzipSync(await readFile(await zip.path()))
+  expect(Object.keys(files)).toEqual([
+    'Statements-pages-1-2.pdf',
+    'Statements-pages-3-5.pdf',
+  ])
+  expect(await widthsOf(files['Statements-pages-3-5.pdf'])).toEqual([
+    300, 400, 500,
+  ])
 
   // Back to the pages, with the split still there.
   await page.getByRole('button', { name: 'Change the splits' }).click()
@@ -184,7 +193,7 @@ test('no accessibility problems on any screen', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Split PDF' }).click()
   await expect(
-    page.getByRole('link', { name: 'Download all (ZIP)' }),
+    page.getByRole('button', { name: 'Download all (ZIP)' }),
   ).toBeVisible()
   expect(await axeViolations(page)).toEqual([])
 })

@@ -88,6 +88,8 @@ test('reorders, rotates and deletes pages without sending anything elsewhere', a
   const download = page.getByRole('link', { name: 'Download PDF' })
   await expect(download).toBeVisible()
   await expect(download).toHaveAttribute('download', 'report-organised.pdf')
+  await page.getByRole('textbox', { name: 'File name' }).fill('Contract')
+  await expect(download).toHaveAttribute('download', 'Contract.pdf')
   await expect(page.getByText(/^3 pages · /)).toBeVisible()
 
   // Read the new PDF back: page 3 first, page 2 turned, page 4 gone.

@@ -151,3 +151,31 @@ test('no accessibility problems before or after choosing PDFs', async ({
   await expect(page.locator('li img')).toHaveCount(2)
   expect(await axeViolations(page)).toEqual([])
 })
+
+test('the merged PDF can be renamed before it’s saved', async ({ page }) => {
+  await page.goto('/merge-pdf')
+  await page
+    .locator('input[type=file]')
+    .setInputFiles([
+      await makePdf('a.pdf', 1, [300, 400]),
+      await makePdf('b.pdf', 1, [500, 500]),
+    ])
+  await page.getByRole('button', { name: 'Merge 2 PDFs' }).click()
+  const download = page.getByRole('link', { name: 'Download PDF' })
+  const name = page.getByRole('textbox', { name: 'File name' })
+  // The usual name to start with, and the extension fixed after the box.
+  await expect(name).toHaveValue('a-merged')
+  await expect(page.getByText('.pdf', { exact: true })).toBeVisible()
+
+  await name.fill('Bank statements Jan–Mar')
+  await expect(download).toHaveAttribute(
+    'download',
+    'Bank statements Jan–Mar.pdf',
+  )
+  // Characters some systems don't allow go, and .pdf isn't doubled.
+  await name.fill('Q1: in/out?.pdf')
+  await expect(download).toHaveAttribute('download', 'Q1 inout.pdf')
+  // Nothing typed: the usual name.
+  await name.fill('')
+  await expect(download).toHaveAttribute('download', 'a-merged.pdf')
+})

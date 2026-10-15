@@ -57,6 +57,8 @@ test('turns a video into a GIF without sending anything to another site', async 
   await expect(download).toBeVisible({ timeout: 90_000 })
   await expect(download).toHaveAttribute('download', 'test-pattern.gif')
   await expect(page.getByText(/320×240 · 3\.0s/)).toBeVisible()
+  await page.getByRole('textbox', { name: 'File name' }).fill('Waving cat')
+  await expect(download).toHaveAttribute('download', 'Waving cat.gif')
 
   const href = (await download.getAttribute('href'))!
   const gif = await page.evaluate(async (url) => {

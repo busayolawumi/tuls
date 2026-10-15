@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  baseName,
   cutEvery,
   groupsFor,
   partName,
-  partsFor,
   partsLabel,
   rangeLabel,
   toggleCut,
@@ -43,22 +43,21 @@ describe('groupsFor', () => {
 })
 
 describe('names and labels', () => {
+  it('starts with the PDF’s own name', () => {
+    expect(baseName('report.pdf')).toBe('report')
+    expect(baseName('Scan.PDF')).toBe('Scan')
+    expect(baseName('.pdf')).toBe('document')
+  })
+
   it('names parts after their pages', () => {
-    expect(partName('report.pdf', [0, 1, 2])).toBe('report-pages-1-3.pdf')
-    expect(partName('report.pdf', [3])).toBe('report-page-4.pdf')
+    expect(partName('report', [0, 1, 2])).toBe('report-pages-1-3.pdf')
+    expect(partName('Statements', [3])).toBe('Statements-page-4.pdf')
     expect(rangeLabel([0, 1, 2])).toBe('Pages 1–3')
     expect(rangeLabel([3])).toBe('Page 4')
   })
 
-  it('lists every part with its name and pages', () => {
-    expect(partsFor('Scan.PDF', 3, new Set([0]))).toEqual([
-      { name: 'Scan-page-1.pdf', pages: [0] },
-      { name: 'Scan-pages-2-3.pdf', pages: [1, 2] },
-    ])
-  })
-
-  it('names the ZIP after the PDF, and counts parts', () => {
-    expect(zipName('report.pdf')).toBe('report-split.zip')
+  it('names the ZIP, and counts parts', () => {
+    expect(zipName('Statements')).toBe('Statements.zip')
     expect(partsLabel(1)).toBe('1 part')
     expect(partsLabel(3)).toBe('3 parts')
   })

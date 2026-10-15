@@ -115,6 +115,10 @@ test('makes a PDF in the chosen order, upright, without the images’ details', 
   await expect(page.getByText(/^2 pages · /)).toBeVisible()
   const { name, text, doc } = await madePdf(page)
   expect(name).toBe('wide.pdf')
+  await page.getByRole('textbox', { name: 'File name' }).fill('Receipts')
+  await expect(
+    page.getByRole('link', { name: 'Download PDF' }),
+  ).toHaveAttribute('download', 'Receipts.pdf')
   // 6 × 3 turned, then 4 × 8 (upright from EXIF), at 0.75 points a pixel.
   expect(sizes(doc)).toEqual([
     [2.25, 4.5],

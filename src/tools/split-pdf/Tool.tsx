@@ -19,22 +19,22 @@ import { useIgnoreFileDrops } from '../../lib/useIgnoreFileDrops'
 import { useTitle } from '../../lib/useTitle'
 import {
   MAX_PAGES,
+  baseName,
   cutEvery,
-  partsFor,
+  groupsFor,
   partsLabel,
   toggleCut,
-  zipName,
   type Cuts,
 } from './lib/parts'
 import { manifest } from './manifest'
-import { PartsResult, type Made, type MadePart } from './PartsResult'
+import { PartsResult, type MadePart } from './PartsResult'
 import { SplitGrid } from './SplitGrid'
 
 // Thumbnails fit a box about 150px square; drawn at twice that for sharp
 // screens.
 const PICTURE_SIZE = 300
 
-type Result = { parts: MadePart[]; zip?: Made }
+type Result = { parts: MadePart[] }
 
 const SPLIT_ERRORS: Record<PdfErrorKind, string> = {
   password: PDF_ERROR_MESSAGES.password,
@@ -67,7 +67,8 @@ function SplitPdf() {
   const { pictures, want, unwant } = usePagePictures(opened?.doc, PICTURE_SIZE)
 
   const count = opened?.doc.numPages ?? 0
-  const parts = opened ? partsFor(opened.file.name, count, cuts) : []
+  // The pages of each part the splits make.
+  const parts = opened ? groupsFor(count, cuts) : []
 
   const handleFiles = useCallback(
     async ([file]: File[]) => {
@@ -121,24 +122,15 @@ function SplitPdf() {
     setSplitting(true)
     setSplitError(undefined)
     try {
-      const { files, zip } = await splitPdfInBackground(
+      const files = await splitPdfInBackground(
         await opened.file.arrayBuffer(),
         parts,
       )
-      const made = (
-        name: string,
-        bytes: Uint8Array<ArrayBuffer>,
-        type: string,
-      ) => {
-        const blob = new Blob([bytes], { type })
-        return { name, blob, url: URL.createObjectURL(blob) }
-      }
       setResult({
-        parts: parts.map((part, i) => ({
-          ...made(part.name, files[i], 'application/pdf'),
-          pages: part.pages,
-        })),
-        zip: zip && made(zipName(opened.file.name), zip, 'application/zip'),
+        parts: parts.map((pages, i) => {
+          const blob = new Blob([files[i]], { type: 'application/pdf' })
+          return { pages, blob, url: URL.createObjectURL(blob) }
+        }),
       })
     } catch (e) {
       console.error(e)
@@ -153,7 +145,6 @@ function SplitPdf() {
     if (!result) return
     return () => {
       for (const part of result.parts) URL.revokeObjectURL(part.url)
-      if (result.zip) URL.revokeObjectURL(result.zip.url)
     }
   }, [result])
 
@@ -270,7 +261,7 @@ function SplitPdf() {
                   value={every}
                   disabled={splitting}
                   onChange={(e) => setEvery(e.target.value)}
-                  className="w-14 rounded-md border border-zinc-300 bg-transparent px-1.5 py-1 text-center dark:border-zinc-700"
+                  className="w-14 rounded-md border border-zinc-300 bg-transparent px-1.5 py-1 text-center text-base sm:text-sm dark:border-zinc-700"
                 />
                 pages
               </label>
@@ -348,10 +339,10 @@ function SplitPdf() {
         </div>
       )}
 
-      {screen === 'result' && result && (
+      {screen === 'result' && result && opened && (
         <PartsResult
           parts={result.parts}
-          zip={result.zip}
+          start={baseName(opened.file.name)}
           pictures={pictures}
           back={{
             label: 'Change the splits',

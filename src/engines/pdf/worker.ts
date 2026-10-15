@@ -4,14 +4,14 @@ import { pdfErrorKind } from './errors'
 import { imagesToPdf, type PageImage, type PageSize } from './images'
 import { mergePdfs } from './merge'
 import { organisePdf, type PagePlan } from './organise'
-import { splitPdf, type SplitPart, type SplitResult } from './split'
+import { splitPdf } from './split'
 
 export type WorkerRequest =
   | { id: number; op: 'merge'; files: ArrayBuffer[] }
   | { id: number; op: 'organise'; file: ArrayBuffer; plan: PagePlan[] }
-  | { id: number; op: 'split'; file: ArrayBuffer; parts: SplitPart[] }
+  | { id: number; op: 'split'; file: ArrayBuffer; groups: number[][] }
   | { id: number; op: 'images'; images: PageImage[]; size: PageSize }
-export type WorkerResult = Uint8Array | SplitResult
+export type WorkerResult = Uint8Array | Uint8Array[]
 export type WorkerResponse =
   | { id: number; ok: true; result: WorkerResult }
   | {
@@ -28,7 +28,7 @@ function run(request: WorkerRequest): Promise<WorkerResult> {
     case 'organise':
       return organisePdf(request.file, request.plan)
     case 'split':
-      return splitPdf(request.file, request.parts)
+      return splitPdf(request.file, request.groups)
     case 'images':
       return imagesToPdf(request.images, request.size)
   }
@@ -36,10 +36,7 @@ function run(request: WorkerRequest): Promise<WorkerResult> {
 
 /** The result's buffers, to hand over to the page rather than copy. */
 function buffersOf(result: WorkerResult) {
-  const arrays =
-    result instanceof Uint8Array
-      ? [result]
-      : [...result.files, ...(result.zip ? [result.zip] : [])]
+  const arrays = Array.isArray(result) ? result : [result]
   // Each buffer can only be listed once.
   return [...new Set(arrays.map((bytes) => bytes.buffer))]
 }

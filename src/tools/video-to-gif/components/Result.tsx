@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
+import { FileNameField } from '../../../components/FileNameField'
 import { formatSize } from '../../../lib/format'
+import { useFileName } from '../../../lib/useFileName'
 
 // Past this, a GIF is slow to send and some apps won't take it.
 const BIG_GIF = 10_000_000
@@ -8,7 +10,7 @@ export type GifResult = {
   blob: Blob
   /** An object URL for `blob`. */
   url: string
-  /** The download name, e.g. IMG_2416.gif. */
+  /** The name to start with, e.g. IMG_2416.gif. It can be changed. */
   name: string
   /** How long the GIF lasts, in seconds. */
   length: number
@@ -22,6 +24,7 @@ type Props = {
 
 export function Result({ gif, onEditAgain, onMakeAnother }: Props) {
   const [dimensions, setDimensions] = useState<string>()
+  const file = useFileName(gif.name)
 
   // Only some browsers (mostly on phones) can share files. Where they can't,
   // the Share button doesn't appear.
@@ -33,7 +36,9 @@ export function Result({ gif, onEditAgain, onMakeAnother }: Props) {
   async function handleShare() {
     if (!shareable) return
     try {
-      await navigator.share({ files: [shareable] })
+      // With the name as it is now, which may have been changed.
+      const named = new File([gif.blob], file.name, { type: 'image/gif' })
+      await navigator.share({ files: [named] })
     } catch (e) {
       // Closing the share sheet counts as an error, but it isn't one.
       if (!(e instanceof DOMException && e.name === 'AbortError')) {
@@ -64,11 +69,17 @@ export function Result({ gif, onEditAgain, onMakeAnother }: Props) {
         </p>
       )}
 
+      <FileNameField
+        value={file.typed}
+        onChange={file.setTyped}
+        extension={file.extension}
+      />
+
       <div className="mt-6 flex justify-center gap-2">
         <a
           className="rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
           href={gif.url}
-          download={gif.name}
+          download={file.name}
         >
           Download GIF
         </a>

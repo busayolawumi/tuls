@@ -1,6 +1,3 @@
-import { outputName } from '../../../engines/pdf/files'
-import type { SplitPart } from '../../../engines/pdf/split'
-
 // No dragging here, so a longer PDF is fine than in Organise PDF.
 export const MAX_PAGES = 1000
 
@@ -45,26 +42,20 @@ export function rangeLabel(pages: number[]) {
   return first === last ? `Page ${first}` : `Pages ${first}–${last}`
 }
 
+/** What the parts' names start with to begin with: the PDF's own name. */
+export function baseName(original: string) {
+  return original.replace(/\.pdf$/i, '') || 'document'
+}
+
 /** A part's file name, e.g. report-pages-1-3.pdf or report-page-4.pdf. */
-export function partName(original: string, pages: number[]) {
+export function partName(base: string, pages: number[]) {
   const [first, last] = span(pages)
-  return outputName(
-    original,
-    first === last ? `page-${first}` : `pages-${first}-${last}`,
-  )
+  return `${base}-${first === last ? `page-${first}` : `pages-${first}-${last}`}.pdf`
 }
 
-/** Every part: its file name and its pages. */
-export function partsFor(original: string, count: number, cuts: Cuts) {
-  return groupsFor(count, cuts).map((pages): SplitPart => ({
-    name: partName(original, pages),
-    pages,
-  }))
-}
-
-/** The ZIP of every part, e.g. report-split.zip. */
-export function zipName(original: string) {
-  return outputName(original, 'split').replace(/\.pdf$/, '.zip')
+/** The ZIP of every part, e.g. report.zip. */
+export function zipName(base: string) {
+  return `${base}.zip`
 }
 
 /** "1 part", "3 parts". */
