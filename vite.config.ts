@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import { pdfjsAssets } from './plugins/pdfjs-assets.ts'
 import { toolPages } from './plugins/tool-pages.ts'
 
 // The live site's headers (privacy policy, cross-origin isolation and so on)
@@ -28,7 +29,7 @@ const ffmpegWasmSize = statSync(
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss(), toolPages()],
+  plugins: [react(), tailwindcss(), toolPages(), pdfjsAssets()],
   define: {
     __FFMPEG_WASM_SIZE__: JSON.stringify(ffmpegWasmSize),
   },
