@@ -60,9 +60,12 @@ test('merges PDFs in the chosen order without sending anything elsewhere', async
   await expect(rows.getByText('2 pages')).toBeVisible()
   await expect(rows.getByText('3 pages')).toBeVisible()
 
-  // Put b.pdf first. Focus stays on the button, even now it's at the top.
+  // Put b.pdf first with the keyboard. Focus stays on the button, even now
+  // it's at the top. (Pressed, not clicked: Safari doesn't focus a clicked
+  // button.)
   const moveUp = page.getByRole('button', { name: 'Move b.pdf up' })
-  await moveUp.click()
+  await moveUp.focus()
+  await page.keyboard.press('Enter')
   await expect(moveUp).toBeFocused()
   await expect(moveUp).toHaveAttribute('aria-disabled', 'true')
   await expect(rows.getByRole('listitem').first()).toContainText('b.pdf')

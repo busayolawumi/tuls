@@ -40,9 +40,10 @@ test('going to another page moves focus to its content', async ({ page }) => {
   await expect(page.locator('main')).toBeFocused()
 })
 
-test('keyboard focus is visible', async ({ page }) => {
+test('keyboard focus is visible', async ({ page, browserName }) => {
   await page.goto('/')
-  await page.keyboard.press('Tab')
+  // Safari's Tab skips links unless Option is held.
+  await page.keyboard.press(browserName === 'webkit' ? 'Alt+Tab' : 'Tab')
   const wordmark = page.getByRole('link', { name: 'Tuls' })
   await expect(wordmark).toBeFocused()
   await expect(wordmark).toHaveCSS('outline-style', 'solid')

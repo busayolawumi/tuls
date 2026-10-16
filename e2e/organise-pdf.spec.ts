@@ -62,8 +62,10 @@ test('reorders, rotates and deletes pages without sending anything elsewhere', a
   await page.getByRole('button', { name: 'Rotate page 2' }).click()
   await expect(handle(page, 2)).toHaveAccessibleName('Page 2, turned 90°')
 
+  // Pressed, not clicked: Safari doesn't focus a clicked button.
   const remove = page.getByRole('button', { name: 'Delete page 4' })
-  await remove.click()
+  await remove.focus()
+  await page.keyboard.press('Enter')
   // The same button now keeps it, and still has focus.
   await expect(page.getByRole('button', { name: 'Keep page 4' })).toBeFocused()
   await expect(page.getByText('Keeping 3 of 4 pages')).toBeVisible()
