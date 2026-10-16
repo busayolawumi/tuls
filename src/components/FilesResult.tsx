@@ -33,7 +33,12 @@ type Props = {
   count: string
   /** The list's name for screen readers, e.g. "The new PDFs". */
   label: string
-  back: Action
+  /**
+   * Whether one name, typed, names them all. Off for files with names of
+   * their own (Word to PDF's documents); the ZIP is then `start`.zip.
+   */
+  nameField?: boolean
+  back?: Action
   startOver: Action
 }
 
@@ -43,6 +48,7 @@ export function FilesResult({
   nameOf,
   count,
   label,
+  nameField = true,
   back,
   startOver,
 }: Props) {
@@ -82,7 +88,9 @@ export function FilesResult({
         {count} · {formatSize(total)}
       </p>
 
-      <FileNameField value={typed} onChange={setTyped} label="File names" />
+      {nameField && (
+        <FileNameField value={typed} onChange={setTyped} label="File names" />
+      )}
 
       <div className="mt-6 flex justify-center gap-2">
         <button
@@ -148,10 +156,14 @@ export function FilesResult({
       </ol>
 
       <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
-        <button type="button" className={textButton} onClick={back.onClick}>
-          {back.label}
-        </button>
-        {' · '}
+        {back && (
+          <>
+            <button type="button" className={textButton} onClick={back.onClick}>
+              {back.label}
+            </button>
+            {' · '}
+          </>
+        )}
         <button
           type="button"
           className={textButton}

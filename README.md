@@ -12,6 +12,7 @@ Work in progress.
 - **Split PDF**: split a PDF into several smaller ones, at the pages you choose.
 - **Images to PDF**: turn photos, scans and screenshots into one PDF, without their location and camera details.
 - **PDF to images**: turn the pages of a PDF into JPG or PNG images.
+- **Word to PDF**: turn Word documents (DOCX, DOC, ODT, RTF) into PDFs with LibreOffice, compiled to WebAssembly and running in the browser. The PDFs show the document as final: tracked changes accepted, no comments, and no author or title. Tuls adds two things LibreOffice lacks, so the layout matches Word's more closely: a Symbol font for Word's bullets, and Word's underlined trailing spaces.
 
 ## Development
 

@@ -21,12 +21,24 @@ export default defineConfig({
     {
       name: 'light',
       use: { ...devices['Desktop Chrome'], colorScheme: 'light' },
+      grepInvert: /@engine/,
     },
     {
       name: 'dark',
       use: { ...devices['Desktop Chrome'], colorScheme: 'dark' },
+      grepInvert: /@engine/,
     },
-    { name: 'phone', use: { ...devices['Pixel 7'] } },
+    { name: 'phone', use: { ...devices['Pixel 7'] }, grepInvert: /@engine/ },
+    // The heavy conversions (FFmpeg, LibreOffice), tagged @engine, run once,
+    // after the rest. Alongside them, other tests slowed into time-outs.
+    // So running one spec file runs the rest first: add --no-deps to skip.
+    // (`npx playwright test e2e/word-to-pdf.spec.ts --no-deps`)
+    {
+      name: 'engines',
+      use: { ...devices['Desktop Chrome'], colorScheme: 'light' },
+      grep: /@engine/,
+      dependencies: ['light', 'dark', 'phone'],
+    },
   ],
   webServer: {
     command: `npm run build && npx vite preview --host 127.0.0.1 --port ${port} --strictPort`,

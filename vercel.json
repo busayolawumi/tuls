@@ -4,7 +4,7 @@
   "trailingSlash": false,
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/((?!engines/).*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -22,6 +22,36 @@
       ]
     },
     {
+      "source": "/engines/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+        },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
+      ]
+    },
+    {
+      "source": "/(word-to-pdf)",
+      "headers": [
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
+      ]
+    },
+    {
       "source": "/pdfjs-(.*)",
       "headers": [
         {
@@ -36,7 +66,8 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
-        }
+        },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
       ]
     }
   ]

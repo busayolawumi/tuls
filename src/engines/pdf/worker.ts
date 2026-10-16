@@ -1,5 +1,6 @@
 // Runs PDF work in a background thread, so the page stays responsive with
 // big files. Started by client.ts.
+import { cleanPdf } from './clean'
 import { pdfErrorKind } from './errors'
 import { imagesToPdf, type PageImage, type PageSize } from './images'
 import { mergePdfs } from './merge'
@@ -11,6 +12,7 @@ export type WorkerRequest =
   | { id: number; op: 'organise'; file: ArrayBuffer; plan: PagePlan[] }
   | { id: number; op: 'split'; file: ArrayBuffer; groups: number[][] }
   | { id: number; op: 'images'; images: PageImage[]; size: PageSize }
+  | { id: number; op: 'clean'; file: ArrayBuffer }
 export type WorkerResult = Uint8Array | Uint8Array[]
 export type WorkerResponse =
   | { id: number; ok: true; result: WorkerResult }
@@ -31,6 +33,8 @@ function run(request: WorkerRequest): Promise<WorkerResult> {
       return splitPdf(request.file, request.groups)
     case 'images':
       return imagesToPdf(request.images, request.size)
+    case 'clean':
+      return cleanPdf(request.file)
   }
 }
 

@@ -5,6 +5,7 @@ import { manifest as organisePdf } from './organise-pdf/manifest.ts'
 import { manifest as pdfToImages } from './pdf-to-images/manifest.ts'
 import { manifest as splitPdf } from './split-pdf/manifest.ts'
 import { manifest as videoToGif } from './video-to-gif/manifest.ts'
+import { manifest as wordToPdf } from './word-to-pdf/manifest.ts'
 
 /**
  * Every tool, in the order the home page lists them. To add one, give it a
@@ -17,4 +18,5 @@ export const tools: ToolManifest[] = [
   splitPdf,
   imagesToPdf,
   pdfToImages,
+  wordToPdf,
 ]

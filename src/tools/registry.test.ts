@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { tools } from './registry'
 
 // Addresses the site already uses, which a tool's id mustn't take.
-const TAKEN = ['index', '404', 'assets', 'licences']
+const TAKEN = ['index', '404', 'assets', 'licences', 'engines']
 
 describe('the tool registry', () => {
   it('lists at least one tool', () => {

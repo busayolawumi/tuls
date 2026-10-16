@@ -79,3 +79,8 @@ export function imagesToPdfInBackground(images: PageImage[], size: PageSize) {
     images.map((image) => image.data),
   )
 }
+
+/** Removes a PDF's details (author, title…) in the background. The buffer is handed over. */
+export function cleanPdfInBackground(file: ArrayBuffer) {
+  return run<Uint8Array>((id) => ({ id, op: 'clean', file }), [file])
+}

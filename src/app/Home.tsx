@@ -1,4 +1,4 @@
-import { Link } from 'react-router'
+import { ToolLink } from '../components/ToolLink.tsx'
 import { useTitle } from '../lib/useTitle.ts'
 import { HEADLINE, SITE_NAME, TAGLINE } from '../site.ts'
 import { tools } from '../tools/registry.ts'
@@ -25,15 +25,15 @@ function Home() {
         <ul className="mt-3 grid gap-3 sm:grid-cols-2">
           {tools.map((tool) => (
             <li key={tool.id}>
-              <Link
-                to={`/${tool.id}`}
+              <ToolLink
+                tool={tool}
                 className="block h-full rounded-lg border border-zinc-200 p-4 transition hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
               >
                 <span className="font-medium">{tool.name}</span>
                 <span className="mt-1 block text-sm text-zinc-600 dark:text-zinc-400">
                   {tool.description}
                 </span>
-              </Link>
+              </ToolLink>
             </li>
           ))}
         </ul>

@@ -66,7 +66,6 @@ test('pages are sent with the privacy headers', async ({ request }) => {
   const headers = response.headers()
   expect(headers['content-security-policy']).toContain("connect-src 'self'")
   expect(headers['x-content-type-options']).toBe('nosniff')
-  // Cross-origin isolation is off for now. It stopped the video timeline's
-  // thumbnails on iPhones, and only LibreOffice needs it (later, per page).
+  // Cross-origin isolation is only on the pages that need it (LibreOffice's).
   expect(headers['cross-origin-embedder-policy']).toBeUndefined()
 })

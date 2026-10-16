@@ -32,48 +32,54 @@ test('the home page links to the tool', async ({ page }) => {
   )
 })
 
-test('turns a video into a GIF without sending anything to another site', async ({
-  page,
-  baseURL,
-}, testInfo) => {
-  // One conversion is enough, and the 32 MB engine makes it the slow one.
-  test.skip(testInfo.project.name !== 'light', 'Runs once, in light')
-  test.setTimeout(120_000)
-  const errors = watchErrors(page)
-  const elsewhere: string[] = []
-  page.on('request', (request) => {
-    const url = request.url()
-    const local = [baseURL!, 'blob:', 'data:'].some((start) =>
-      url.startsWith(start),
+test(
+  'turns a video into a GIF without sending anything to another site',
+  { tag: '@engine' },
+  async ({ page, baseURL }, testInfo) => {
+    // One conversion is enough, and the 32 MB engine makes it the slow one.
+    // It runs on its own after the other tests (the "engines" project in
+    // playwright.config.ts), or in a config's "light" project.
+    test.skip(
+      !['engines', 'light'].includes(testInfo.project.name),
+      'Runs once',
     )
-    if (!local) elsewhere.push(url)
-  })
+    test.setTimeout(120_000)
+    const errors = watchErrors(page)
+    const elsewhere: string[] = []
+    page.on('request', (request) => {
+      const url = request.url()
+      const local = [baseURL!, 'blob:', 'data:'].some((start) =>
+        url.startsWith(start),
+      )
+      if (!local) elsewhere.push(url)
+    })
 
-  await page.goto('/video-to-gif')
-  await page.locator('input[type=file]').setInputFiles(video)
-  await page.getByRole('button', { name: 'Convert to GIF' }).click()
+    await page.goto('/video-to-gif')
+    await page.locator('input[type=file]').setInputFiles(video)
+    await page.getByRole('button', { name: 'Convert to GIF' }).click()
 
-  const download = page.getByRole('link', { name: 'Download GIF' })
-  await expect(download).toBeVisible({ timeout: 90_000 })
-  await expect(download).toHaveAttribute('download', 'test-pattern.gif')
-  await expect(page.getByText(/320×240 · 3\.0s/)).toBeVisible()
-  await page.getByRole('textbox', { name: 'File name' }).fill('Waving cat')
-  await expect(download).toHaveAttribute('download', 'Waving cat.gif')
+    const download = page.getByRole('link', { name: 'Download GIF' })
+    await expect(download).toBeVisible({ timeout: 90_000 })
+    await expect(download).toHaveAttribute('download', 'test-pattern.gif')
+    await expect(page.getByText(/320×240 · 3\.0s/)).toBeVisible()
+    await page.getByRole('textbox', { name: 'File name' }).fill('Waving cat')
+    await expect(download).toHaveAttribute('download', 'Waving cat.gif')
 
-  const href = (await download.getAttribute('href'))!
-  const gif = await page.evaluate(async (url) => {
-    const bytes = new Uint8Array(await (await fetch(url)).arrayBuffer())
-    return {
-      start: String.fromCharCode(...bytes.slice(0, 6)),
-      size: bytes.length,
-    }
-  }, href)
-  expect(gif.start).toBe('GIF89a')
-  expect(gif.size).toBeGreaterThan(1000)
+    const href = (await download.getAttribute('href'))!
+    const gif = await page.evaluate(async (url) => {
+      const bytes = new Uint8Array(await (await fetch(url)).arrayBuffer())
+      return {
+        start: String.fromCharCode(...bytes.slice(0, 6)),
+        size: bytes.length,
+      }
+    }, href)
+    expect(gif.start).toBe('GIF89a')
+    expect(gif.size).toBeGreaterThan(1000)
 
-  expect(elsewhere).toEqual([])
-  expect(errors).toEqual([])
-})
+    expect(elsewhere).toEqual([])
+    expect(errors).toEqual([])
+  },
+)
 
 test('a file that isn’t a video gets a plain message', async ({ page }) => {
   await page.goto('/video-to-gif')
