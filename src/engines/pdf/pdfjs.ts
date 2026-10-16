@@ -1,5 +1,6 @@
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
+import { imageScale } from './scale'
 
 // pdf.js (Mozilla's PDF reader) for looking at PDFs: page counts and page
 // pictures. It's only downloaded when a PDF tool first needs it, and does
@@ -56,6 +57,42 @@ export async function pagePicture(
     canvas.height = Math.ceil(viewport.height)
     await page.render({ canvas, viewport }).promise
     return canvas.toDataURL('image/jpeg', 0.8)
+  } finally {
+    page.cleanup()
+  }
+}
+
+/** A page drawn as an image file, and its size in pixels. */
+export type PageImageFile = { blob: Blob; width: number; height: number }
+
+/**
+ * Draws one page (numbered from 1) as a JPEG or PNG at `dpi` dots per inch,
+ * on white, as it would print. Big pages are drawn smaller (see scale.ts).
+ */
+export async function pageImageFile(
+  doc: PDFDocumentProxy,
+  pageNumber: number,
+  dpi: number,
+  type: 'image/jpeg' | 'image/png',
+): Promise<PageImageFile> {
+  const page = await doc.getPage(pageNumber)
+  try {
+    const base = page.getViewport({ scale: 1 })
+    const viewport = page.getViewport({
+      scale: imageScale(base.width, base.height, dpi),
+    })
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.round(viewport.width)
+    canvas.height = Math.round(viewport.height)
+    await page.render({ canvas, viewport, background: 'white' }).promise
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, type, 0.92),
+    )
+    const { width, height } = canvas
+    // Let the canvas's memory go now; Safari is slow to on its own.
+    canvas.width = canvas.height = 0
+    if (!blob) throw new Error('Couldn’t make an image of the page')
+    return { blob, width, height }
   } finally {
     page.cleanup()
   }

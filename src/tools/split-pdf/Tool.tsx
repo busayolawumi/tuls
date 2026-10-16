@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { FileDrop } from '../../components/FileDrop'
+import { FilesResult } from '../../components/FilesResult'
 import { useOnePdf } from '../../components/pdf/useOnePdf'
 import { usePagePictures } from '../../components/pdf/usePagePictures'
 import { splitPdfInBackground } from '../../engines/pdf/client'
@@ -13,13 +14,15 @@ import {
   MAX_FILE_SIZE,
   checkPdf,
   pagesLabel,
+  pdfBase,
 } from '../../engines/pdf/files'
 import { formatSize } from '../../lib/format'
 import { useIgnoreFileDrops } from '../../lib/useIgnoreFileDrops'
 import { useTitle } from '../../lib/useTitle'
 import {
   MAX_PAGES,
-  baseName,
+  partName,
+  rangeLabel,
   cutEvery,
   groupsFor,
   partsLabel,
@@ -27,14 +30,14 @@ import {
   type Cuts,
 } from './lib/parts'
 import { manifest } from './manifest'
-import { PartsResult, type MadePart } from './PartsResult'
 import { SplitGrid } from './SplitGrid'
 
 // Thumbnails fit a box about 150px square; drawn at twice that for sharp
 // screens.
 const PICTURE_SIZE = 300
 
-type Result = { parts: MadePart[] }
+/** The new PDFs: each one's pages (numbered from 0) and the file. */
+type Result = { parts: { pages: number[]; blob: Blob; url: string }[] }
 
 const SPLIT_ERRORS: Record<PdfErrorKind, string> = {
   password: PDF_ERROR_MESSAGES.password,
@@ -340,10 +343,16 @@ function SplitPdf() {
       )}
 
       {screen === 'result' && result && opened && (
-        <PartsResult
-          parts={result.parts}
-          start={baseName(opened.file.name)}
-          pictures={pictures}
+        <FilesResult
+          files={result.parts.map((part) => ({
+            ...part,
+            picture: pictures.get(part.pages[0]),
+            detail: rangeLabel(part.pages),
+          }))}
+          start={pdfBase(opened.file.name)}
+          nameOf={(base, i) => partName(base, result.parts[i].pages)}
+          count={partsLabel(result.parts.length)}
+          label="The new PDFs"
           back={{
             label: 'Change the splits',
             onClick: () => setResult(undefined),

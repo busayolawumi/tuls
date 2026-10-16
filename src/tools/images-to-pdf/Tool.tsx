@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FileDrop } from '../../components/FileDrop'
 import { FileResult } from '../../components/FileResult'
+import { Segmented } from '../../components/Segmented'
 import { moveTo } from '../../components/sortable/moveTo'
 import { imagesToPdfInBackground } from '../../engines/pdf/client'
 import { pdfErrorKind, type PdfErrorKind } from '../../engines/pdf/errors'
@@ -238,34 +239,16 @@ function ImagesToPdf() {
         <div className="w-full">
           {screen === 'list' && (
             <>
-              <fieldset className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2">
-                <legend className="sr-only">Page size</legend>
-                <span
-                  aria-hidden="true"
-                  className="text-sm text-zinc-600 dark:text-zinc-400"
-                >
-                  Page size
-                </span>
-                <div className="inline-flex rounded-lg border border-zinc-300 p-0.5 dark:border-zinc-700">
-                  {SIZES.map(([value, label]) => (
-                    <label
-                      key={value}
-                      className="cursor-pointer rounded-md px-3 py-1.5 text-sm transition-colors has-checked:bg-zinc-900 has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent has-disabled:cursor-default has-disabled:opacity-50 dark:has-checked:bg-zinc-100 dark:has-checked:text-zinc-900"
-                    >
-                      <input
-                        type="radio"
-                        name="page-size"
-                        value={value}
-                        checked={size === value}
-                        disabled={making}
-                        onChange={() => handleSize(value)}
-                        className="sr-only"
-                      />
-                      {label}
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
+              <div className="mt-6">
+                <Segmented
+                  legend="Page size"
+                  name="page-size"
+                  options={SIZES}
+                  value={size}
+                  onChange={handleSize}
+                  disabled={making}
+                />
+              </div>
               <p className="mt-4 mb-3 text-sm text-zinc-600 dark:text-zinc-400">
                 <span className="pointer-coarse:hidden">
                   Drag images to change the order. With a keyboard, pick one up

@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
-  baseName,
   cutEvery,
   groupsFor,
   partName,
   partsLabel,
   rangeLabel,
   toggleCut,
-  zipName,
 } from './parts'
 
 describe('toggleCut', () => {
@@ -43,12 +41,6 @@ describe('groupsFor', () => {
 })
 
 describe('names and labels', () => {
-  it('starts with the PDF’s own name', () => {
-    expect(baseName('report.pdf')).toBe('report')
-    expect(baseName('Scan.PDF')).toBe('Scan')
-    expect(baseName('.pdf')).toBe('document')
-  })
-
   it('names parts after their pages', () => {
     expect(partName('report', [0, 1, 2])).toBe('report-pages-1-3.pdf')
     expect(partName('Statements', [3])).toBe('Statements-page-4.pdf')
@@ -56,8 +48,7 @@ describe('names and labels', () => {
     expect(rangeLabel([3])).toBe('Page 4')
   })
 
-  it('names the ZIP, and counts parts', () => {
-    expect(zipName('Statements')).toBe('Statements.zip')
+  it('counts parts', () => {
     expect(partsLabel(1)).toBe('1 part')
     expect(partsLabel(3)).toBe('3 parts')
   })

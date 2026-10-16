@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { checkPdf, MAX_FILE_SIZE, outputName, pagesLabel } from './files'
+import {
+  checkPdf,
+  MAX_FILE_SIZE,
+  outputName,
+  pagesLabel,
+  pdfBase,
+} from './files'
 
 // checkPdf only reads the name, type and size.
 const file = (name: string, type: string, size = 100_000) =>
@@ -19,6 +25,14 @@ describe('checkPdf', () => {
     expect(
       checkPdf(file('big.pdf', 'application/pdf', MAX_FILE_SIZE + 1)),
     ).toBe('That PDF is 200 MB. Each PDF can be up to 200 MB.')
+  })
+})
+
+describe('pdfBase', () => {
+  it('is the PDF’s name without .pdf', () => {
+    expect(pdfBase('report.pdf')).toBe('report')
+    expect(pdfBase('Scan.PDF')).toBe('Scan')
+    expect(pdfBase('.pdf')).toBe('document')
   })
 })
 

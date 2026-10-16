@@ -19,10 +19,14 @@ export function checkPdf(file: File): string | undefined {
   }
 }
 
+/** A PDF's name without .pdf, e.g. report.pdf → report. */
+export function pdfBase(original: string) {
+  return original.replace(/\.pdf$/i, '') || 'document'
+}
+
 /** A new PDF's name from the original's, e.g. report.pdf → report-merged.pdf. */
 export function outputName(original: string, suffix: string) {
-  const base = original.replace(/\.pdf$/i, '') || 'document'
-  return `${base}-${suffix}.pdf`
+  return `${pdfBase(original)}-${suffix}.pdf`
 }
 
 /** "1 page", "12 pages". */

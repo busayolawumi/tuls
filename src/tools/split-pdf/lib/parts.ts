@@ -42,20 +42,10 @@ export function rangeLabel(pages: number[]) {
   return first === last ? `Page ${first}` : `Pages ${first}–${last}`
 }
 
-/** What the parts' names start with to begin with: the PDF's own name. */
-export function baseName(original: string) {
-  return original.replace(/\.pdf$/i, '') || 'document'
-}
-
 /** A part's file name, e.g. report-pages-1-3.pdf or report-page-4.pdf. */
 export function partName(base: string, pages: number[]) {
   const [first, last] = span(pages)
   return `${base}-${first === last ? `page-${first}` : `pages-${first}-${last}`}.pdf`
-}
-
-/** The ZIP of every part, e.g. report.zip. */
-export function zipName(base: string) {
-  return `${base}.zip`
 }
 
 /** "1 part", "3 parts". */

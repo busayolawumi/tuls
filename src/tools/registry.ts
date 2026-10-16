@@ -2,6 +2,7 @@ import type { ToolManifest } from './types.ts'
 import { manifest as imagesToPdf } from './images-to-pdf/manifest.ts'
 import { manifest as mergePdf } from './merge-pdf/manifest.ts'
 import { manifest as organisePdf } from './organise-pdf/manifest.ts'
+import { manifest as pdfToImages } from './pdf-to-images/manifest.ts'
 import { manifest as splitPdf } from './split-pdf/manifest.ts'
 import { manifest as videoToGif } from './video-to-gif/manifest.ts'
 
@@ -15,4 +16,5 @@ export const tools: ToolManifest[] = [
   organisePdf,
   splitPdf,
   imagesToPdf,
+  pdfToImages,
 ]
