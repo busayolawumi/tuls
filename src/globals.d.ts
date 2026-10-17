@@ -24,6 +24,18 @@ declare const __LIBREOFFICE__: {
   fontPackSize: number
 }
 
+/** Where the PDF to Word engine is served, and what to download (plugins/pymupdf.ts). */
+declare const __PYMUPDF__: {
+  /** Its folder, e.g. /engines/pymupdf-0.11.16/. */
+  dir: string
+  /** The browser cache it's kept in (Cache Storage). */
+  cache: string
+  /** The files Pyodide fetches, as served, and their sizes in bytes. */
+  files: { url: string; size: number }[]
+  /** Those served gzipped, by the name Pyodide asks for (without .gz). */
+  gzipped: string[]
+}
+
 /** The engine's font widths, for measuring text (plugins/libreoffice.ts). */
 declare module 'virtual:tuls/font-metrics' {
   const metrics: {

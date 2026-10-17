@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { libreOffice } from './plugins/libreoffice.ts'
 import { pdfjsAssets } from './plugins/pdfjs-assets.ts'
+import { pymupdf } from './plugins/pymupdf.ts'
 import { siteHeaders } from './plugins/site-headers.ts'
 import { toolPages } from './plugins/tool-pages.ts'
 
@@ -25,13 +26,16 @@ export default defineConfig({
     toolPages(),
     pdfjsAssets(),
     libreOffice(),
+    pymupdf(),
   ],
   define: {
     __FFMPEG_WASM_SIZE__: JSON.stringify(ffmpegWasmSize),
   },
-  // Pre-bundling breaks the worker that ffmpeg.wasm starts.
+  // Pre-bundling breaks the worker that ffmpeg.wasm starts. The PDF to Word
+  // engine is one plain module, only imported by its worker: found that late,
+  // it would make the dev server reload the page.
   optimizeDeps: {
-    exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util'],
+    exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util', '@bentopdf/pymupdf-wasm'],
   },
   // ffmpeg.wasm starts its worker as a module and loads the core with import().
   worker: { format: 'es' },

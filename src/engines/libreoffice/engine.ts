@@ -1,3 +1,4 @@
+import { within as withinLimit } from '../within'
 import { Converter } from './converter'
 import { saveEngine } from './download'
 import { OfficeError, officeErrorKind } from './errors'
@@ -39,16 +40,12 @@ let idle: ReturnType<typeof setTimeout> | undefined
 export const RESTARTED = 'LibreOffice stopped answering, so it was restarted.'
 
 /** Fails with a "stuck" error if `promise` takes longer than `ms`. */
-function within<T>(promise: Promise<T>, ms: number): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined
-  const late = new Promise<never>((_, reject) => {
-    timer = setTimeout(
-      () => reject(new OfficeError('stuck', `No answer in ${ms / 1000} s`)),
-      ms,
-    )
-  })
-  return Promise.race([promise, late]).finally(() => clearTimeout(timer))
-}
+const within = <T>(promise: Promise<T>, ms: number) =>
+  withinLimit(
+    promise,
+    ms,
+    () => new OfficeError('stuck', `No answer in ${ms / 1000} s`),
+  )
 
 // A tiny document converted straight after starting. The first conversion
 // is the one most likely to get stuck, and it's quicker to find out on this

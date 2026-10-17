@@ -4,6 +4,7 @@ import { manifest as imagesToPdf } from './images-to-pdf/manifest.ts'
 import { manifest as mergePdf } from './merge-pdf/manifest.ts'
 import { manifest as organisePdf } from './organise-pdf/manifest.ts'
 import { manifest as pdfToImages } from './pdf-to-images/manifest.ts'
+import { manifest as pdfToWord } from './pdf-to-word/manifest.ts'
 import { manifest as powerpointToPdf } from './powerpoint-to-pdf/manifest.ts'
 import { manifest as splitPdf } from './split-pdf/manifest.ts'
 import { manifest as videoToGif } from './video-to-gif/manifest.ts'
@@ -21,6 +22,7 @@ export const tools: ToolManifest[] = [
   imagesToPdf,
   pdfToImages,
   wordToPdf,
+  pdfToWord,
   excelToPdf,
   powerpointToPdf,
 ]

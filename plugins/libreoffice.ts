@@ -1,27 +1,20 @@
 import { createHash } from 'node:crypto'
-import {
-  createReadStream,
-  createWriteStream,
-  existsSync,
-  readFileSync,
-} from 'node:fs'
+import { createReadStream, readFileSync } from 'node:fs'
 import {
   copyFile,
   mkdir,
   open,
   readFile,
-  rename,
   stat,
   writeFile,
 } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
-import { pipeline } from 'node:stream/promises'
 import { fileURLToPath } from 'node:url'
-import { createGzip } from 'node:zlib'
 import { zipSync } from 'fflate'
 import type { Plugin } from 'vite'
 import { CODE_POINTS, fontWidths, type FontWidths } from './font-metrics.ts'
+import { gzipOnce } from './gzip-once.ts'
 import { FREE_FONTS, freeFontFiles } from './libreoffice-fonts/free.ts'
 import { substituteAliases } from './libreoffice-fonts/substitutes.ts'
 
@@ -140,19 +133,7 @@ export function patchWorker(text: string) {
 }
 
 /** Gzips a big file once per version, reusing it on later builds. */
-async function gzipped(name: string) {
-  const target = join(GZIP_CACHE, `${name}.gz`)
-  if (existsSync(target)) return target
-  await mkdir(GZIP_CACHE, { recursive: true })
-  const partial = `${target}.${process.pid}.partial`
-  await pipeline(
-    createReadStream(join(root, 'wasm', name)),
-    createGzip({ level: 9 }),
-    createWriteStream(partial),
-  )
-  await rename(partial, target)
-  return target
-}
+const gzipped = (name: string) => gzipOnce(join(root, 'wasm', name), GZIP_CACHE)
 
 // Fonts LibreOffice gets when it starts (see libreoffice-fonts/README.md).
 const EXTRA_FONTS = ['StandardSymbolsPS-Symbol.ttf']

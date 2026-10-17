@@ -134,17 +134,23 @@ describe('patching the engine', () => {
     }
   })
 
-  it('packs them in one ZIP that only changes when they do', () => {
-    const pack = freeFontPack()
-    expect(freeFontPack().equals(pack)).toBe(true)
-    const names = Object.keys(unzipSync(new Uint8Array(pack)))
-    expect(names).toHaveLength(
-      FREE_FONTS.flatMap((font) => freeFontFiles(font)).length,
-    )
-    expect(names).toContain('Roboto_700Bold.ttf')
-    // About 4.7 MB: a little more than this is fine, a lot more isn't.
-    expect(pack.length).toBeLessThan(5_500_000)
-  })
+  // Packing 9 MB of fonts twice takes a few seconds, more alongside the
+  // other tests.
+  it(
+    'packs them in one ZIP that only changes when they do',
+    { timeout: 30_000 },
+    () => {
+      const pack = freeFontPack()
+      expect(freeFontPack().equals(pack)).toBe(true)
+      const names = Object.keys(unzipSync(new Uint8Array(pack)))
+      expect(names).toHaveLength(
+        FREE_FONTS.flatMap((font) => freeFontFiles(font)).length,
+      )
+      expect(names).toContain('Roboto_700Bold.ttf')
+      // About 4.7 MB: a little more than this is fine, a lot more isn't.
+      expect(pack.length).toBeLessThan(5_500_000)
+    },
+  )
 
   it('only names stand-ins the engine or Tuls has', async () => {
     const sofficeJs = read('wasm/soffice.js')

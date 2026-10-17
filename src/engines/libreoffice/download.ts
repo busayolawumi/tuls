@@ -1,141 +1,36 @@
+import { engineCache } from '../engineCache'
 import { OfficeError } from './errors'
 
 // LibreOffice's two big files (77 MB gzipped) and Tuls's free fonts (5 MB)
-// are saved in the browser's Cache Storage, under a name for this version,
-// so they download once. The engine's own fetch wrapper
+// are saved on the device (engineCache.ts). The engine's own fetch wrapper
 // (plugins/libreoffice-prelude.js) reads the big files from there, and the
-// converter the fonts. Saving them first, here, also means the download can
-// show progress, and the engine's start-up time limit doesn't include it.
+// converter the fonts.
 
-const FILES = [
-  {
-    url: __LIBREOFFICE__.wasm,
-    size: __LIBREOFFICE__.wasmSize,
-    type: 'application/gzip',
-  },
-  {
-    url: __LIBREOFFICE__.data,
-    size: __LIBREOFFICE__.dataSize,
-    type: 'application/gzip',
-  },
-  {
-    url: __LIBREOFFICE__.fontPack,
-    size: __LIBREOFFICE__.fontPackSize,
-    type: 'application/zip',
-  },
-]
+const engine = engineCache({
+  cache: __LIBREOFFICE__.cache,
+  files: [
+    {
+      url: __LIBREOFFICE__.wasm,
+      size: __LIBREOFFICE__.wasmSize,
+      type: 'application/gzip',
+    },
+    {
+      url: __LIBREOFFICE__.data,
+      size: __LIBREOFFICE__.dataSize,
+      type: 'application/gzip',
+    },
+    {
+      url: __LIBREOFFICE__.fontPack,
+      size: __LIBREOFFICE__.fontPackSize,
+      type: 'application/zip',
+    },
+  ],
+  oldCopies: /^tuls-libreoffice-/,
+  error: (kind, cause) => new OfficeError(kind, cause),
+})
 
 /** The first-time download, in bytes. */
-export const DOWNLOAD_SIZE = FILES.reduce((sum, file) => sum + file.size, 0)
-
-const OLD_COPIES = /^tuls-libreoffice-/
-
-/** Tuls's cache, if this browser lets the page keep one. */
-async function openCache() {
-  try {
-    if (!('caches' in self)) return undefined
-    return await caches.open(__LIBREOFFICE__.cache)
-  } catch {
-    // Some private modes refuse, and plain http has no Cache Storage.
-    return undefined
-  }
-}
-
-/** Whether the engine is saved on this device already. */
-export async function isEngineSaved() {
-  const cache = await openCache()
-  if (!cache) return false
-  try {
-    for (const file of FILES) {
-      if (!(await cache.match(file.url))) return false
-    }
-    return true
-  } catch {
-    return false
-  }
-}
-
-/**
- * Frees the space older versions of the engine took, and files this
- * version no longer uses (fonts packed differently since).
- */
-async function removeOldCopies(cache: Cache) {
-  try {
-    for (const name of await caches.keys()) {
-      if (OLD_COPIES.test(name) && name !== __LIBREOFFICE__.cache) {
-        await caches.delete(name)
-      }
-    }
-    const current = FILES.map((file) => new URL(file.url, location.href).href)
-    for (const request of await cache.keys()) {
-      if (!current.includes(request.url)) await cache.delete(request)
-    }
-  } catch {
-    // Only tidying up.
-  }
-}
-
-/** One of the saved files, or from the network if it isn't saved. */
-export async function engineFile(url: string) {
-  const cache = await openCache()
-  const saved = await cache?.match(url).catch(() => undefined)
-  const response = saved ?? (await fetch(url))
-  if (!response.ok)
-    throw new OfficeError('network', `${response.status} ${url}`)
-  return response
-}
-
-/**
- * Saves the engine's big files on this device, reporting how far it's got
- * (0–1). Returns false if the browser won't keep them; the engine then
- * downloads them itself when it starts, with no progress to show.
- */
-export async function saveEngine(
-  onProgress: (ratio: number) => void,
-  signal?: AbortSignal,
-): Promise<boolean> {
-  const cache = await openCache()
-  if (!cache) return false
-  void removeOldCopies(cache)
-  let saved = 0
-  for (const file of FILES) {
-    if (await cache.match(file.url)) {
-      saved += file.size
-      continue
-    }
-    let response: Response
-    try {
-      response = await fetch(file.url, { signal })
-    } catch (e) {
-      throw new OfficeError(signal?.aborted ? 'unknown' : 'network', e)
-    }
-    if (!response.ok || !response.body) {
-      throw new OfficeError('network', `${response.status} ${file.url}`)
-    }
-    let received = 0
-    const counted = response.body.pipeThrough(
-      new TransformStream<Uint8Array, Uint8Array>({
-        transform(chunk, controller) {
-          received += chunk.byteLength
-          onProgress(Math.min((saved + received) / DOWNLOAD_SIZE, 1))
-          controller.enqueue(chunk)
-        },
-      }),
-    )
-    try {
-      await cache.put(
-        file.url,
-        new Response(counted, { headers: { 'Content-Type': file.type } }),
-      )
-    } catch (e) {
-      // Out of space: let the engine download them itself.
-      if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-        return false
-      }
-      throw new OfficeError(signal?.aborted ? 'unknown' : 'network', e)
-    }
-    saved += file.size
-  }
-  onProgress(1)
-  return true
-}
+export const DOWNLOAD_SIZE = engine.size
+export const isEngineSaved = engine.isSaved
+export const engineFile = engine.file
+export const saveEngine = engine.save

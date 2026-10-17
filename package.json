@@ -19,6 +19,7 @@
     "images": "node scripts/make-images.ts"
   },
   "dependencies": {
+    "@bentopdf/pymupdf-wasm": "0.11.16",
     "@cantoo/pdf-lib": "^2.11.1",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",

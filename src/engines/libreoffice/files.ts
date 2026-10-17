@@ -1,4 +1,5 @@
 import { formatSize } from '../../lib/format'
+import { outputNames } from '../../lib/outputNames'
 import type { OfficeErrorKind } from './errors'
 
 // What the Office tools check before converting a file, and how they name
@@ -40,26 +41,10 @@ export function checkDocument(
   }
 }
 
-/** A document's name without its extension, e.g. report.docx → report. */
-export function documentBase(name: string) {
-  return name.replace(/\.[a-z0-9]+$/i, '').trim() || 'document'
-}
+export { documentBase } from '../../lib/outputNames'
 
-/**
- * Each converted file's name: the document's, as a PDF. Documents with the
- * same name get a number, so a ZIP doesn't lose any: report.pdf, report
- * (2).pdf.
- */
-export function pdfNames(names: string[]) {
-  const seen = new Map<string, number>()
-  return names.map((name) => {
-    const base = documentBase(name)
-    const key = base.toLowerCase()
-    const count = (seen.get(key) ?? 0) + 1
-    seen.set(key, count)
-    return count === 1 ? `${base}.pdf` : `${base} (${count}).pdf`
-  })
-}
+/** Each PDF's name: the document's, numbered if two share one (lib/outputNames.ts). */
+export const pdfNames = (names: string[]) => outputNames(names, 'pdf')
 
 // How files start, to catch a wrong or locked file before LibreOffice sees
 // it. LibreOffice opens anything it doesn't recognise as plain text, so a

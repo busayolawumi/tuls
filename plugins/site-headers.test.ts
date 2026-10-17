@@ -5,18 +5,23 @@ import { headersFor, matches, readRules } from './site-headers.ts'
 const rules = readRules()
 const POLICY = 'Content-Security-Policy'
 const ENGINE = '/engines/libreoffice-2.7.2/soffice.0123456789.js'
+// PDF to Word's engine, which works with the page's own policy.
+const PYMUPDF = '/engines/pymupdf-0.11.16/pyodide.asm.js'
 const PAGES = ['/', '/video-to-gif', '/word-to-pdf', '/no-such-page', '/404']
 const FILES = [
   '/assets/index-abc.js',
   '/licences.txt',
   '/pdfjs-6.4.299/cmaps/x',
+  PYMUPDF,
 ]
 
 describe('vercel.json headers', () => {
   it('matches addresses the way its patterns are written', () => {
-    expect(matches('/((?!engines/).*)', '/')).toBe(true)
-    expect(matches('/((?!engines/).*)', '/word-to-pdf')).toBe(true)
-    expect(matches('/((?!engines/).*)', ENGINE)).toBe(false)
+    const pages = '/((?!engines/libreoffice-).*)'
+    expect(matches(pages, '/')).toBe(true)
+    expect(matches(pages, '/word-to-pdf')).toBe(true)
+    expect(matches(pages, PYMUPDF)).toBe(true)
+    expect(matches(pages, ENGINE)).toBe(false)
     expect(matches('/(word-to-pdf)', '/word-to-pdf')).toBe(true)
     expect(matches('/(word-to-pdf)', '/word-to-pdf-old')).toBe(false)
     expect(headersFor(rules, '/word-to-pdf?x=1')).toEqual(
@@ -32,9 +37,10 @@ describe('vercel.json headers', () => {
     }
   })
 
-  it("gives the engines the same policy, with only 'unsafe-eval' added", () => {
+  it("gives LibreOffice the same policy, with only 'unsafe-eval' added", () => {
     // LibreOffice's glue code builds functions from strings. The engine's
     // workers take their policy from their own scripts, so pages stay strict.
+    // No other engine needs it.
     const page = headersFor(rules, '/')[POLICY]
     expect(headersFor(rules, ENGINE)[POLICY]).toBe(
       page.replace("script-src 'self'", "script-src 'self' 'unsafe-eval'"),
@@ -42,7 +48,7 @@ describe('vercel.json headers', () => {
   })
 
   it('never gives an address the same header from two rules', () => {
-    for (const path of [...PAGES, ...FILES, ENGINE]) {
+    for (const path of [...PAGES, ...FILES, ENGINE, PYMUPDF]) {
       const keys = rules
         .filter((rule) => matches(rule.source, path))
         .flatMap((rule) => rule.headers.map((header) => header.key))
@@ -74,7 +80,7 @@ describe('vercel.json headers', () => {
     // An isolated page may only start a worker whose script is sent with
     // COEP too (Chrome: ERR_BLOCKED_BY_RESPONSE). On other files, and on
     // pages that aren't isolated, the header changes nothing that Tuls uses.
-    for (const path of ['/assets/worker-abc.js', ENGINE]) {
+    for (const path of ['/assets/worker-abc.js', ENGINE, PYMUPDF]) {
       expect(headersFor(rules, path)['Cross-Origin-Embedder-Policy']).toBe(
         'require-corp',
       )
@@ -82,7 +88,12 @@ describe('vercel.json headers', () => {
   })
 
   it('caches built files and engines for good, and pages not at all', () => {
-    for (const path of ['/assets/index-abc.js', '/pdfjs-6.4.299/x', ENGINE]) {
+    for (const path of [
+      '/assets/index-abc.js',
+      '/pdfjs-6.4.299/x',
+      ENGINE,
+      PYMUPDF,
+    ]) {
       expect(headersFor(rules, path)['Cache-Control'], path).toContain(
         'immutable',
       )

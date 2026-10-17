@@ -1,0 +1,112 @@
+// Runs PDF to Word in a background thread: PyMuPDF and pdf2docx, which are
+// Python, through Pyodide (@bentopdf/pymupdf-wasm). The package itself would
+// run on the page and freeze it for as long as a conversion takes. The
+// package loads Python and its packages; the conversion is Tuls's own
+// (tuls_pdf2docx.py), which repairs a PDF's text map and fixes how pdf2docx
+// writes fonts, tables, pictures, headers and footers. Started by client.ts.
+import { PyMuPDF } from '@bentopdf/pymupdf-wasm'
+import { cleanDocx } from './cleanDocx'
+import { engineFetch } from './fetch'
+import officeFonts from './officeFonts.json?raw'
+import { progressReader, type Progress } from './progress'
+import tulsPdf2docx from './tuls_pdf2docx.py?raw'
+
+export type WorkerRequest =
+  | { id: number; type: 'start' }
+  | { id: number; type: 'convert'; pdf: ArrayBuffer }
+export type WorkerReply =
+  | { id: number; type: 'ready' }
+  | { id: number; type: 'progress'; progress: Progress }
+  | { id: number; type: 'result'; docx: ArrayBuffer; leftOut: number[] }
+  | { id: number; type: 'error'; error: string }
+
+type PyCallable = ((...args: unknown[]) => unknown) & { destroy(): void }
+type Pyodide = {
+  setStderr(options: { batched: (line: string) => void }): void
+  setStdout(options: { batched: (line: string) => void }): void
+  runPython(code: string): unknown
+  globals: { get(name: string): PyCallable }
+  FS: {
+    writeFile(path: string, data: Uint8Array): void
+    readFile(path: string): Uint8Array
+    unlink(path: string): void
+  }
+}
+
+self.fetch = engineFetch(self.fetch.bind(self), __PYMUPDF__, self.location.href)
+
+// The package and Pyodide report every step on the console. Out of sight,
+// as LibreOffice's are; Tuls's own warnings are on the page.
+for (const level of ['log', 'info', 'warn'] as const) {
+  console[level] = console.debug
+}
+
+const engine = new PyMuPDF({ assetPath: __PYMUPDF__.dir })
+let started: Promise<Pyodide> | undefined
+// pdf2docx's log, read for progress while a PDF converts.
+let onLine: (line: string) => void = () => {}
+
+function start() {
+  started ??= (async () => {
+    await engine.load()
+    // Not in the package's types, but it's how to reach Python's output.
+    const pyodide = await (
+      engine as unknown as { getPyodide(): Promise<Pyodide> }
+    ).getPyodide()
+    pyodide.setStderr({ batched: (line) => onLine(line) })
+    pyodide.setStdout({ batched: () => {} })
+    pyodide.runPython(tulsPdf2docx)
+    call(pyodide, 'configure', officeFonts)
+    return pyodide
+  })()
+  return started
+}
+
+/** Calls one of tuls_pdf2docx.py's functions. */
+function call(pyodide: Pyodide, name: string, ...args: unknown[]) {
+  const fn = pyodide.globals.get(name)
+  try {
+    return fn(...args)
+  } finally {
+    fn.destroy()
+  }
+}
+
+const INPUT = '/tuls-input.pdf'
+const OUTPUT = '/tuls-output.docx'
+
+const reply = (message: WorkerReply, transfer: Transferable[] = []) =>
+  self.postMessage(message, { transfer })
+
+self.onmessage = async ({ data }: MessageEvent<WorkerRequest>) => {
+  try {
+    const pyodide = await start()
+    if (data.type === 'start') return reply({ id: data.id, type: 'ready' })
+    onLine = progressReader((progress) =>
+      reply({ id: data.id, type: 'progress', progress }),
+    )
+    pyodide.FS.writeFile(INPUT, new Uint8Array(data.pdf))
+    try {
+      const { leftOut } = JSON.parse(
+        String(call(pyodide, 'convert', INPUT, OUTPUT)),
+      ) as { leftOut: number[] }
+      const docx = cleanDocx(pyodide.FS.readFile(OUTPUT))
+      reply({ id: data.id, type: 'result', docx: docx.buffer, leftOut }, [
+        docx.buffer,
+      ])
+    } finally {
+      for (const path of [INPUT, OUTPUT]) {
+        try {
+          pyodide.FS.unlink(path)
+        } catch {
+          // Not made: the conversion failed.
+        }
+      }
+    }
+  } catch (e) {
+    const error = e instanceof Error ? `${e.name}: ${e.message}` : String(e)
+    reply({ id: data.id, type: 'error', error })
+  } finally {
+    onLine = () => {}
+  }
+}

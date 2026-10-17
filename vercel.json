@@ -4,7 +4,7 @@
   "trailingSlash": false,
   "headers": [
     {
-      "source": "/((?!engines/).*)",
+      "source": "/((?!engines/libreoffice-).*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -22,7 +22,7 @@
       ]
     },
     {
-      "source": "/engines/(.*)",
+      "source": "/engines/libreoffice-(.*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -36,7 +36,12 @@
         {
           "key": "Permissions-Policy",
           "value": "camera=(), microphone=(), geolocation=()"
-        },
+        }
+      ]
+    },
+    {
+      "source": "/engines/(.*)",
+      "headers": [
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"

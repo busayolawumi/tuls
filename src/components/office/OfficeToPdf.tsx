@@ -32,9 +32,11 @@ import { formatSize } from '../../lib/format'
 import { useIgnoreFileDrops } from '../../lib/useIgnoreFileDrops'
 import { useTitle } from '../../lib/useTitle'
 import type { ToolManifest } from '../../tools/types'
+import { FailedList, type Failed } from '../FailedList'
 import { FileDrop } from '../FileDrop'
 import { FileResult } from '../FileResult'
 import { FilesResult } from '../FilesResult'
+import { ProgressPanel } from '../ProgressPanel'
 import { closedWhileConverting, markConverting, markDone } from './lastRun'
 
 // Word, Excel or PowerPoint to PDF: the same screens for each, with
@@ -61,7 +63,6 @@ type Made = {
   pages: number
   picture: string | null
 }
-type Failed = { name: string; message: string }
 type Working = { step: EngineStep; index: number; total: number; name: string }
 
 // Big enough for the result's preview; the list's thumbnails are smaller.
@@ -320,7 +321,16 @@ export function OfficeToPdf({ manifest, one, many, kinds, intro }: Props) {
       )}
 
       {screen === 'working' && working && (
-        <Progress working={working} onCancel={handleCancel} />
+        <ProgressPanel
+          label={stepLabel(working)}
+          ratio={stepRatio(working)}
+          note={
+            working.step.step === 'download'
+              ? `${formatSize(DOWNLOAD_SIZE)}, only needed the first time.`
+              : undefined
+          }
+          onCancel={handleCancel}
+        />
       )}
 
       {screen === 'result' && made && (
@@ -374,77 +384,6 @@ export function OfficeToPdf({ manifest, one, many, kinds, intro }: Props) {
         </>
       )}
     </section>
-  )
-}
-
-function Progress({
-  working,
-  onCancel,
-}: {
-  working: Working
-  onCancel: () => void
-}) {
-  const ratio = stepRatio(working)
-  const percent = ratio === undefined ? undefined : Math.round(ratio * 100)
-  return (
-    <div className="mt-10 w-full max-w-xl text-left">
-      <div className="flex items-baseline justify-between gap-3 text-sm">
-        <p role="status" className="min-w-0 truncate">
-          {stepLabel(working)}
-        </p>
-        {percent !== undefined && (
-          <p className="shrink-0 font-mono text-xs text-zinc-500 dark:text-zinc-400">
-            {percent}%
-          </p>
-        )}
-      </div>
-      <div
-        role="progressbar"
-        aria-label="Converting"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={percent}
-        className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-900"
-      >
-        {percent === undefined ? (
-          <div className="h-full w-full bg-accent/40 motion-safe:animate-pulse" />
-        ) : (
-          <div
-            className="h-full bg-accent transition-[width] duration-300"
-            style={{ width: `${percent}%` }}
-          />
-        )}
-      </div>
-      <div className="mt-2 flex items-baseline justify-between gap-3">
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          {working.step.step === 'download' &&
-            `${formatSize(DOWNLOAD_SIZE)}, only needed the first time.`}
-        </p>
-        <button
-          type="button"
-          className="-mx-2 -my-3.5 px-2 py-3.5 text-xs text-zinc-500 underline-offset-4 hover:underline dark:text-zinc-400"
-          onClick={onCancel}
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function FailedList({ failed }: { failed: Failed[] }) {
-  return (
-    <div
-      role="alert"
-      className="mt-4 w-full max-w-xl space-y-1 text-left text-sm text-red-600 dark:text-red-400"
-    >
-      {failed.map((file, i) => (
-        // Two documents can share a name.
-        <p key={i}>
-          <span className="font-medium">{file.name}:</span> {file.message}
-        </p>
-      ))}
-    </div>
   )
 }
 
