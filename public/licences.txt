@@ -25,11 +25,12 @@ dragging pages, licensed under the MIT License.
 Split PDF uses fflate (https://github.com/101arrowz/fflate) by Arjun Barrett
 for ZIP files, licensed under the MIT License.
 
-Word to PDF uses LibreOffice (https://www.libreoffice.org), version 24.8.8,
-compiled to WebAssembly by the libreoffice-document-converter project
-(@matbee/libreoffice-converter 2.7.2). Both are licensed under the Mozilla
-Public License 2.0 (MPL-2.0). LibreOffice includes third-party components
-under their own licences: https://www.libreoffice.org/about-us/licenses
+Word, Excel and PowerPoint to PDF use LibreOffice
+(https://www.libreoffice.org), version 24.8.8, compiled to WebAssembly by the
+libreoffice-document-converter project (@matbee/libreoffice-converter 2.7.2).
+Both are licensed under the Mozilla Public License 2.0 (MPL-2.0). LibreOffice
+includes third-party components under their own licences:
+https://www.libreoffice.org/about-us/licenses
 
 Source code for LibreOffice (build d1c9e0e4e1ddeb24fe8f93e56860b3765043f8b1):
 https://git.libreoffice.org/core/+/d1c9e0e4e1ddeb24fe8f93e56860b3765043f8b1
@@ -40,8 +41,12 @@ Tuls serves the engine's WebAssembly and data files unmodified (gzipped). It
 changes two of its JavaScript files, and the changes are in Tuls's source
 (plugins/libreoffice.ts and plugins/libreoffice-prelude.js): the engine starts
 8 threads instead of 4 and reads its compressed files through a small loader,
-and the converter allows a slow first start, logs quietly, and accepts
-tracked changes before saving a text document as PDF.
+and the converter allows a slow first start, logs quietly, opens documents in
+the visitor's language, and accepts tracked changes before saving a text
+document as PDF. Tuls also adds font substitutions to LibreOffice's font
+settings (fc_local.conf), so text in a font the engine lacks, such as Aptos
+or Century Gothic, uses the engine font closest to it in width
+(plugins/libreoffice-fonts/substitutes.ts).
 
 The engine includes these fonts, each under its own free licence, most of
 them the SIL Open Font License 1.1, as listed in LibreOffice's licence
@@ -52,7 +57,7 @@ Liberation, Linux Biolinum, Linux Libertine, Miriam Libre, Noto (Sans and
 Serif, Arabic, Armenian, Georgian, Hebrew, Lao, Lisu, Kufi, Naskh),
 OpenSymbol, Reem Kufi, Rubik and Scheherazade.
 
-Word to PDF also gives LibreOffice Standard Symbols PS by URW++, from the URW
+The Office tools also give LibreOffice Standard Symbols PS by URW++, from the URW
 base 35 fonts (https://github.com/ArtifexSoftware/urw-base35-fonts), so that
 Word's bullets, which use the Symbol font, are spaced as in Word. It is licensed
 under the GNU Affero General Public License, version 3 (the same licence as
@@ -67,12 +72,33 @@ Tuls changed its family name to Symbol and its line spacing to Symbol's
 proportions. The changed font and how it was changed are in Tuls's source
 (plugins/libreoffice-fonts/).
 
+The Office tools also give LibreOffice twelve font families from Google Fonts,
+unmodified, through the Expo Google Fonts packages
+(https://github.com/expo/google-fonts), so that documents using them come out
+in the same font. Ubuntu is licensed under the Ubuntu Font Licence 1.0, and the
+others under the SIL Open Font License 1.1:
+
+- Roboto: Copyright 2011 The Roboto Project Authors (https://github.com/googlefonts/roboto-classic)
+- Open Sans: Copyright 2020 The Open Sans Project Authors (https://github.com/googlefonts/opensans)
+- Lato: Copyright (c) 2010-2014 by tyPoland Lukasz Dziedzic (team@latofonts.com) with Reserved Font Name "Lato"
+- Montserrat: Copyright 2024 The Montserrat.Git Project Authors (https://github.com/JulietaUla/Montserrat.git)
+- Poppins: Copyright 2020 The Poppins Project Authors (https://github.com/itfoundry/Poppins)
+- Inter: Copyright 2020 The Inter Project Authors (https://github.com/rsms/inter)
+- Raleway: Copyright 2010 The Raleway Project Authors (impallari@gmail.com), with Reserved Font Name "Raleway".
+- Nunito: Copyright 2014 The Nunito Project Authors (https://github.com/googlefonts/nunito)
+- Source Sans 3: Copyright 2010-2020 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'. All Rights Reserved. Source is a trademark of Adobe in the United States and/or other countries.
+- Oswald: Copyright 2016 The Oswald Project Authors (https://github.com/googlefonts/OswaldFont)
+- Playfair Display: Copyright 2017 The Playfair Display Project Authors (https://github.com/clauseggers/Playfair-Display), with Reserved Font Name "Playfair Display"
+- Ubuntu: Copyright 2011 Canonical Ltd. Licensed under the Ubuntu Font Licence 1.0
+
 The Geist and Geist Mono fonts are by Vercel, licensed under the SIL Open Font
 License 1.1: https://github.com/vercel/geist-font
 
 The full licence texts follow: the GNU General Public License, version 2
 (FFmpeg), the MIT License (pdf-lib, dnd-kit and fflate), the Apache
-License 2.0 (pdf.js) and the Mozilla Public License 2.0 (LibreOffice).
+License 2.0 (pdf.js), the Mozilla Public License 2.0 (LibreOffice), the SIL
+Open Font License 1.1 (Geist, the Google fonts and most of the engine's fonts)
+and the Ubuntu Font Licence 1.0 (Ubuntu).
 
 ------------------------------------------------------------------------------
 
@@ -1052,3 +1078,191 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 
 This Source Code Form is "Incompatible With Secondary Licenses", as
 defined by the Mozilla Public License, v. 2.0.
+
+------------------------------------------------------------------------------
+
+-----------------------------------------------------------
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font creation
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded, 
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the
+copyright statement(s).
+
+"Original Version" refers to the collection of Font Software components as
+distributed by the Copyright Holder(s).
+
+"Modified Version" refers to any derivative made by adding to, deleting,
+or substituting -- in part or in whole -- any of the components of the
+Original Version, by changing formats or by porting the Font Software to a
+new environment.
+
+"Author" refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
+
+PERMISSION & CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components,
+in Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this license. These can be
+included either as stand-alone text files, human-readable headers or
+in the appropriate machine-readable metadata fields within text or
+binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the corresponding
+Copyright Holder. This restriction only applies to the primary font name as
+presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
+
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created
+using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
+
+------------------------------------------------------------------------------
+
+-------------------------------
+UBUNTU FONT LICENCE Version 1.0
+-------------------------------
+
+PREAMBLE
+This licence allows the licensed fonts to be used, studied, modified and
+redistributed freely. The fonts, including any derivative works, can be
+bundled, embedded, and redistributed provided the terms of this licence
+are met. The fonts and derivatives, however, cannot be released under
+any other licence. The requirement for fonts to remain under this
+licence does not require any document created using the fonts or their
+derivatives to be published under this licence, as long as the primary
+purpose of the document is not to be a vehicle for the distribution of
+the fonts.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright
+Holder(s) under this licence and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+"Original Version" refers to the collection of Font Software components
+as received under this licence.
+
+"Modified Version" refers to any derivative made by adding to, deleting,
+or substituting -- in part or in whole -- any of the components of the
+Original Version, by changing formats or by porting the Font Software to
+a new environment.
+
+"Copyright Holder(s)" refers to all individuals and companies who have a
+copyright ownership of the Font Software.
+
+"Substantially Changed" refers to Modified Versions which can be easily
+identified as dissimilar to the Font Software by users of the Font
+Software comparing the Original Version with the Modified Version.
+
+To "Propagate" a work means to do anything with it that, without
+permission, would make you directly or secondarily liable for
+infringement under applicable copyright law, except executing it on a
+computer or modifying a private copy. Propagation includes copying,
+distribution (with or without modification and with or without charging
+a redistribution fee), making available to the public, and in some
+countries other activities as well.
+
+PERMISSION & CONDITIONS
+This licence does not grant any rights under trademark law and all such
+rights are reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of the Font Software, to propagate the Font Software, subject to
+the below conditions:
+
+1) Each copy of the Font Software must contain the above copyright
+notice and this licence. These can be included either as stand-alone
+text files, human-readable headers or in the appropriate machine-
+readable metadata fields within text or binary files as long as those
+fields can be easily viewed by the user.
+
+2) The font name complies with the following:
+(a) The Original Version must retain its name, unmodified.
+(b) Modified Versions which are Substantially Changed must be renamed to
+avoid use of the name of the Original Version or similar names entirely.
+(c) Modified Versions which are not Substantially Changed must be
+renamed to both (i) retain the name of the Original Version and (ii) add
+additional naming elements to distinguish the Modified Version from the
+Original Version. The name of such Modified Versions must be the name of
+the Original Version, with "derivative X" where X represents the name of
+the new work, appended to that name.
+
+3) The name(s) of the Copyright Holder(s) and any contributor to the
+Font Software shall not be used to promote, endorse or advertise any
+Modified Version, except (i) as required by this licence, (ii) to
+acknowledge the contribution(s) of the Copyright Holder(s) or (iii) with
+their explicit written permission.
+
+4) The Font Software, modified or unmodified, in part or in whole, must
+be distributed entirely under this licence, and must not be distributed
+under any other licence. The requirement for fonts to remain under this
+licence does not affect any document created using the Font Software,
+except any version of the Font Software extracted from a document
+created using the Font Software may only be distributed under this
+licence.
+
+TERMINATION
+This licence becomes null and void if any of the above conditions are
+not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF
+COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM OTHER
+DEALINGS IN THE FONT SOFTWARE.

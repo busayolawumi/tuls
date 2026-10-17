@@ -1,5 +1,10 @@
 import { createHash } from 'node:crypto'
-import { createReadStream, createWriteStream, existsSync } from 'node:fs'
+import {
+  createReadStream,
+  createWriteStream,
+  existsSync,
+  readFileSync,
+} from 'node:fs'
 import {
   copyFile,
   mkdir,
@@ -14,8 +19,11 @@ import { dirname, join } from 'node:path'
 import { pipeline } from 'node:stream/promises'
 import { fileURLToPath } from 'node:url'
 import { createGzip } from 'node:zlib'
+import { zipSync } from 'fflate'
 import type { Plugin } from 'vite'
 import { CODE_POINTS, fontWidths, type FontWidths } from './font-metrics.ts'
+import { FREE_FONTS, freeFontFiles } from './libreoffice-fonts/free.ts'
+import { substituteAliases } from './libreoffice-fonts/substitutes.ts'
 
 // LibreOffice compiled to WebAssembly (@matbee/libreoffice-converter), for
 // the Word, Excel and PowerPoint tools. Its files are served as they are, not
@@ -26,6 +34,8 @@ import { CODE_POINTS, fontWidths, type FontWidths } from './font-metrics.ts'
 // - gzips the two big ones, once, into node_modules/.cache. Vercel would send
 //   soffice.data uncompressed and compresses soffice.wasm only lightly, and
 //   only Safari and Firefox can unpack Brotli in a page (CLAUDE.md),
+// - packs Tuls's free fonts (libreoffice-fonts/free.ts) into one ZIP, which
+//   downloads and is kept with the big files,
 // - serves them in development, and copies them into the build under
 //   /engines/libreoffice-<version>/, which vercel.json caches for good and
 //   gives the engine's own privacy policy.
@@ -85,13 +95,17 @@ export function patchSoffice(text: string, prelude: string) {
 }
 
 /**
- * The converter's worker, changed in three places:
+ * The converter's worker, changed in four places:
  *
  * - It gives up if starting takes 2 minutes, and that includes the download
  *   when the engine isn't saved yet, so a slow connection would always fail.
  *   Allow 10: Tuls has its own limits.
  * - LibreOffice's hundreds of log lines go to console.debug (the console's
  *   "Verbose" level), not console.error.
+ * - Documents open in the visitor's language and region (`language` in the
+ *   convert message), so what Office leaves to the computer's settings
+ *   comes out as their Office would show it: the paper size of
+ *   spreadsheets that don't say, and dates in the "short date" format.
  * - Text documents have their tracked changes accepted before saving. The
  *   PDF would otherwise print deleted text, struck through, which people
  *   believe is gone (CLAUDE.md). `d` is the document and `g` its type, 0
@@ -109,6 +123,12 @@ export function patchWorker(text: string) {
     'print:console.log,printErr:console.error}',
     'print:console.debug,printErr:console.debug}',
     'log setting',
+  )
+  patched = replaceOnce(
+    patched,
+    'let m=M(t,o);if(m?d=c.documentLoadWithOptions(s,m):d=c.documentLoad(s)',
+    'let m=[M(t,o),l.language?"Language="+l.language:""].filter(Boolean).join(",");if(m?d=c.documentLoadWithOptions(s,m):d=c.documentLoad(s)',
+    'document load',
   )
   patched = replaceOnce(
     patched,
@@ -136,6 +156,61 @@ async function gzipped(name: string) {
 
 // Fonts LibreOffice gets when it starts (see libreoffice-fonts/README.md).
 const EXTRA_FONTS = ['StandardSymbolsPS-Symbol.ttf']
+// LibreOffice's font aliases, with Tuls's added (libreoffice-fonts/substitutes.ts).
+const FONT_CONFIG = '/instdir/share/fonts/truetype/fc_local.conf'
+
+/** The files in the engine's data, by path: where each starts and ends. */
+function engineFiles(sofficeJs: string) {
+  return new Map(
+    [...sofficeJs.matchAll(/\{filename:"([^"]+)",start:(\d+),end:(\d+)/g)].map(
+      (m) => [m[1], [Number(m[2]), Number(m[3])]] as const,
+    ),
+  )
+}
+
+/** One file from the engine's data. */
+async function engineFile(sofficeJs: string, path: string) {
+  const range = engineFiles(sofficeJs).get(path)
+  if (!range) throw new Error(`LibreOffice engine ${version}: no ${path}`)
+  const data = await open(join(root, 'wasm/soffice.data'))
+  try {
+    const file = Buffer.alloc(range[1] - range[0])
+    await data.read(file, 0, file.length, range[0])
+    return file
+  } finally {
+    await data.close()
+  }
+}
+
+/**
+ * Tuls's free fonts in one ZIP, compressed (Vercel doesn't compress ZIPs).
+ * The date inside is fixed, so the same fonts make the same file and name.
+ */
+export function freeFontPack() {
+  const files: Record<string, Uint8Array> = {}
+  for (const font of FREE_FONTS) {
+    for (const path of freeFontFiles(font)) {
+      files[path.split('/').pop()!] = new Uint8Array(
+        readFileSync(require.resolve(path)),
+      )
+    }
+  }
+  return Buffer.from(
+    zipSync(files, { level: 9, mtime: new Date('2026-01-01T00:00:00Z') }),
+  )
+}
+
+/** LibreOffice's fc_local.conf with Tuls's aliases added at the end. */
+export async function fontConfig() {
+  const sofficeJs = await readFile(join(root, 'wasm/soffice.js'), 'utf8')
+  const original = (await engineFile(sofficeJs, FONT_CONFIG)).toString('utf8')
+  return replaceOnce(
+    original,
+    '</fontconfig>',
+    `${substituteAliases()}</fontconfig>`,
+    'end of fc_local.conf',
+  )
+}
 
 // The engine's stand-ins for Office fonts, whose widths Tuls measures text
 // with (virtual:tuls/font-metrics), by family and their files' names.
@@ -161,11 +236,7 @@ export type FontMetrics = {
 /** Character widths of the measured fonts, read from the engine's data. */
 export async function engineFontMetrics(): Promise<FontMetrics> {
   const sofficeJs = await readFile(join(root, 'wasm/soffice.js'), 'utf8')
-  const files = new Map(
-    [...sofficeJs.matchAll(/\{filename:"([^"]+)",start:(\d+),end:(\d+)/g)].map(
-      (m) => [m[1], [Number(m[2]), Number(m[3])]] as const,
-    ),
-  )
+  const files = engineFiles(sofficeJs)
   const data = await open(join(root, 'wasm/soffice.data'))
   try {
     const fonts: FontMetrics['fonts'] = {}
@@ -194,7 +265,7 @@ type Engine = {
   scripts: Map<string, string>
   /** The gzipped big files on disk, by their name in ENGINE_DIR. */
   big: Map<string, string>
-  /** Extra fonts, by their name in ENGINE_DIR. */
+  /** Extra fonts, the font settings and the free fonts' ZIP, by name. */
   fonts: Map<string, Buffer>
   metrics: FontMetrics
   /** What the app needs to know (__LIBREOFFICE__). */
@@ -212,8 +283,14 @@ export type LibreOfficeInfo = {
   wasmSize: number
   dataSize: number
   cache: string
-  /** Extra fonts to give LibreOffice: where they are, and their file names. */
+  /**
+   * Files for LibreOffice's fonts folder (extra fonts, and fc_local.conf):
+   * where they are, and their file names there.
+   */
   fonts: { url: string; name: string }[]
+  /** The free fonts' ZIP, also for the fonts folder, and its size. */
+  fontPack: string
+  fontPackSize: number
 }
 
 async function prepare(): Promise<Engine> {
@@ -240,6 +317,19 @@ async function prepare(): Promise<Engine> {
     fonts.set(served, font)
     fontInfo.push({ url: ENGINE_DIR + served, name })
   }
+  const config = Buffer.from(await fontConfig())
+  const configHash = createHash('sha256')
+    .update(config)
+    .digest('hex')
+    .slice(0, 10)
+  fonts.set(`fc_local.${configHash}.conf`, config)
+  const pack = freeFontPack()
+  const packName = `fonts.${createHash('sha256').update(pack).digest('hex').slice(0, 10)}.zip`
+  fonts.set(packName, pack)
+  fontInfo.push({
+    url: `${ENGINE_DIR}fc_local.${configHash}.conf`,
+    name: 'fc_local.conf',
+  })
   const hash = createHash('sha256')
     .update(Object.values(sources).join('\0'))
     .digest('hex')
@@ -272,6 +362,8 @@ async function prepare(): Promise<Engine> {
       dataSize: (await stat(data)).size,
       cache: ENGINE_CACHE,
       fonts: fontInfo,
+      fontPack: ENGINE_DIR + packName,
+      fontPackSize: pack.length,
     },
   }
 }
@@ -304,7 +396,14 @@ export function libreOffice(): Plugin {
         }
         const font = engine.fonts.get(name)
         if (font) {
-          res.setHeader('Content-Type', 'font/ttf')
+          res.setHeader(
+            'Content-Type',
+            name.endsWith('.conf')
+              ? 'text/plain'
+              : name.endsWith('.zip')
+                ? 'application/zip'
+                : 'font/ttf',
+          )
           res.end(font)
           return
         }

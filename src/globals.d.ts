@@ -17,8 +17,11 @@ declare const __LIBREOFFICE__: {
   dataSize: number
   /** The browser cache the big files are kept in (Cache Storage). */
   cache: string
-  /** Extra fonts for LibreOffice: where they are, and their file names. */
+  /** Files for LibreOffice's fonts folder (extra fonts, fc_local.conf). */
   fonts: { url: string; name: string }[]
+  /** Tuls's free fonts in one ZIP, also kept in the cache, and its size. */
+  fontPack: string
+  fontPackSize: number
 }
 
 /** The engine's font widths, for measuring text (plugins/libreoffice.ts). */

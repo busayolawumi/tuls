@@ -1,3 +1,5 @@
+import { unzipSync } from 'fflate'
+import { engineFile } from './download'
 import { OfficeError, officeErrorKind } from './errors'
 
 // Talks to @matbee/libreoffice-converter's worker, which runs LibreOffice
@@ -91,18 +93,27 @@ export class Converter {
 
   /** Loads LibreOffice. On a first visit this includes the download. */
   async start() {
-    // Extra fonts, which LibreOffice finds with its own (a Symbol font for
-    // Word's bullets: plugins/libreoffice-fonts/README.md).
-    const fonts = await Promise.all(
-      __LIBREOFFICE__.fonts.map(async ({ url, name }) => {
-        const response = await fetch(url)
-        if (!response.ok) throw new OfficeError('network', url)
-        return {
-          filename: name,
-          data: new Uint8Array(await response.arrayBuffer()),
-        }
-      }),
-    )
+    // Extra fonts, which LibreOffice finds with its own: a Symbol font for
+    // Word's bullets (plugins/libreoffice-fonts/README.md), the font
+    // settings, and Tuls's free fonts (plugins/libreoffice-fonts/free.ts).
+    const [extra, pack] = await Promise.all([
+      Promise.all(
+        __LIBREOFFICE__.fonts.map(async ({ url, name }) => {
+          const response = await fetch(url)
+          if (!response.ok) throw new OfficeError('network', url)
+          return {
+            filename: name,
+            data: new Uint8Array(await response.arrayBuffer()),
+          }
+        }),
+      ),
+      engineFile(__LIBREOFFICE__.fontPack).then(async (response) =>
+        Object.entries(
+          unzipSync(new Uint8Array(await response.arrayBuffer())),
+        ).map(([filename, data]) => ({ filename, data })),
+      ),
+    ])
+    const fonts = [...extra, ...pack]
     await this.loaded
     await this.send(
       {
@@ -115,15 +126,18 @@ export class Converter {
         verbose: false,
         fonts,
       },
-      fonts.map((font) => font.data.buffer),
+      // Each buffer once: files from one ZIP may share one.
+      [...new Set(fonts.map((font) => font.data.buffer))],
     )
   }
 
   /**
    * Converts a document, e.g. a .docx (`extension` "docx"), to PDF. The
-   * bytes are handed over, not copied.
+   * bytes are handed over, not copied. `language` is a language tag such as
+   * "en-GB", for what Office leaves to the computer's settings (the paper
+   * of spreadsheets that don't say, and "short date" formats).
    */
-  toPdf(bytes: Uint8Array<ArrayBuffer>, extension: string) {
+  toPdf(bytes: Uint8Array<ArrayBuffer>, extension: string, language?: string) {
     return this.send<Uint8Array>(
       {
         type: 'convert',
@@ -131,6 +145,7 @@ export class Converter {
         inputExt: extension,
         outputFormat: 'pdf',
         filterOptions: PDF_OPTIONS,
+        language,
       },
       [bytes.buffer],
     )

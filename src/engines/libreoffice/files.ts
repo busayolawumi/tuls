@@ -70,7 +70,7 @@ const ZIP = [0x50, 0x4b, 0x03, 0x04]
 const OLE = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]
 const RTF = [...'{\\rtf'].map((c) => c.charCodeAt(0))
 // Office Open XML and OpenDocument files are ZIPs.
-const ZIPPED = ['docx', 'xlsx', 'pptx', 'odt', 'ods', 'odp']
+const ZIPPED = ['docx', 'xlsx', 'xlsm', 'pptx', 'ppsx', 'odt', 'ods', 'odp']
 
 const startsWith = (head: Uint8Array, magic: number[]) =>
   magic.every((byte, i) => head[i] === byte)
@@ -89,4 +89,18 @@ export function contentProblem(
     return startsWith(head, OLE) ? 'password' : 'unreadable'
   }
   if (extension === 'rtf' && !startsWith(head, RTF)) return 'unreadable'
+}
+
+/**
+ * A language tag for LibreOffice, e.g. "en-NG", from the browser's, if it's
+ * a plain one: language, maybe a script, maybe a region.
+ */
+export function languageTag(tag: string | undefined) {
+  if (!tag) return undefined
+  const match = /^([a-z]{2,3})(-[A-Z][a-z]{3})?(-(?:[A-Z]{2}|\d{3}))?$/i.exec(
+    tag,
+  )
+  if (!match) return undefined
+  const [, language, script = '', region = ''] = match
+  return `${language.toLowerCase()}${script}${region.toUpperCase()}`
 }

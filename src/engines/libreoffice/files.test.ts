@@ -5,6 +5,7 @@ import {
   checkDocument,
   contentProblem,
   documentBase,
+  languageTag,
   pdfNames,
 } from './files'
 
@@ -66,6 +67,11 @@ describe('looking inside documents', () => {
 
   it('accepts files that start the way their kind does', () => {
     expect(contentProblem('docx', ZIP)).toBeUndefined()
+    for (const extension of ['xlsx', 'xlsm', 'pptx', 'ppsx', 'ods', 'odp']) {
+      expect(contentProblem(extension, ZIP)).toBeUndefined()
+      expect(contentProblem(extension, text('not a zip'))).toBe('unreadable')
+    }
+    expect(contentProblem('xlsx', OLE)).toBe('password')
     expect(contentProblem('odt', ZIP)).toBeUndefined()
     expect(contentProblem('rtf', text('{\\rtf1\\ansi'))).toBeUndefined()
   })
@@ -83,5 +89,22 @@ describe('looking inside documents', () => {
     expect(contentProblem('doc', OLE)).toBeUndefined()
     expect(contentProblem('doc', text('{\\rtf1'))).toBeUndefined()
     expect(contentProblem('doc', text('<html>'))).toBeUndefined()
+  })
+})
+
+describe('the language for LibreOffice', () => {
+  it('passes plain language tags on, tidied', () => {
+    expect(languageTag('en-NG')).toBe('en-NG')
+    expect(languageTag('en-gb')).toBe('en-GB')
+    expect(languageTag('fr')).toBe('fr')
+    expect(languageTag('zh-Hant-TW')).toBe('zh-Hant-TW')
+    expect(languageTag('es-419')).toBe('es-419')
+  })
+
+  it('leaves out anything else', () => {
+    expect(languageTag(undefined)).toBeUndefined()
+    expect(languageTag('')).toBeUndefined()
+    expect(languageTag('en-US-x-private')).toBeUndefined()
+    expect(languageTag('en,Language=xx')).toBeUndefined()
   })
 })

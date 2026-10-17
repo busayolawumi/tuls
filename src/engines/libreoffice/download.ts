@@ -1,14 +1,28 @@
 import { OfficeError } from './errors'
 
-// LibreOffice's two big files (77 MB gzipped) are saved in the browser's
-// Cache Storage, under a name for this version, so they download once. The
-// engine's own fetch wrapper (plugins/libreoffice-prelude.js) reads them from
-// there. Saving them first, here, also means the download can show progress,
-// and the engine's start-up time limit doesn't include it.
+// LibreOffice's two big files (77 MB gzipped) and Tuls's free fonts (5 MB)
+// are saved in the browser's Cache Storage, under a name for this version,
+// so they download once. The engine's own fetch wrapper
+// (plugins/libreoffice-prelude.js) reads the big files from there, and the
+// converter the fonts. Saving them first, here, also means the download can
+// show progress, and the engine's start-up time limit doesn't include it.
 
 const FILES = [
-  { url: __LIBREOFFICE__.wasm, size: __LIBREOFFICE__.wasmSize },
-  { url: __LIBREOFFICE__.data, size: __LIBREOFFICE__.dataSize },
+  {
+    url: __LIBREOFFICE__.wasm,
+    size: __LIBREOFFICE__.wasmSize,
+    type: 'application/gzip',
+  },
+  {
+    url: __LIBREOFFICE__.data,
+    size: __LIBREOFFICE__.dataSize,
+    type: 'application/gzip',
+  },
+  {
+    url: __LIBREOFFICE__.fontPack,
+    size: __LIBREOFFICE__.fontPackSize,
+    type: 'application/zip',
+  },
 ]
 
 /** The first-time download, in bytes. */
@@ -41,17 +55,34 @@ export async function isEngineSaved() {
   }
 }
 
-/** Frees the space older versions of the engine took. */
-async function removeOldCopies() {
+/**
+ * Frees the space older versions of the engine took, and files this
+ * version no longer uses (fonts packed differently since).
+ */
+async function removeOldCopies(cache: Cache) {
   try {
     for (const name of await caches.keys()) {
       if (OLD_COPIES.test(name) && name !== __LIBREOFFICE__.cache) {
         await caches.delete(name)
       }
     }
+    const current = FILES.map((file) => new URL(file.url, location.href).href)
+    for (const request of await cache.keys()) {
+      if (!current.includes(request.url)) await cache.delete(request)
+    }
   } catch {
     // Only tidying up.
   }
+}
+
+/** One of the saved files, or from the network if it isn't saved. */
+export async function engineFile(url: string) {
+  const cache = await openCache()
+  const saved = await cache?.match(url).catch(() => undefined)
+  const response = saved ?? (await fetch(url))
+  if (!response.ok)
+    throw new OfficeError('network', `${response.status} ${url}`)
+  return response
 }
 
 /**
@@ -65,7 +96,7 @@ export async function saveEngine(
 ): Promise<boolean> {
   const cache = await openCache()
   if (!cache) return false
-  void removeOldCopies()
+  void removeOldCopies(cache)
   let saved = 0
   for (const file of FILES) {
     if (await cache.match(file.url)) {
@@ -94,9 +125,7 @@ export async function saveEngine(
     try {
       await cache.put(
         file.url,
-        new Response(counted, {
-          headers: { 'Content-Type': 'application/gzip' },
-        }),
+        new Response(counted, { headers: { 'Content-Type': file.type } }),
       )
     } catch (e) {
       // Out of space: let the engine download them itself.

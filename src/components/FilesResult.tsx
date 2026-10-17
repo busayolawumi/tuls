@@ -126,15 +126,18 @@ export function FilesResult({
             key={file.url}
             className="flex items-center gap-3 rounded-lg border border-zinc-200 p-2 dark:border-zinc-800"
           >
-            {file.picture ? (
-              <img
-                src={file.picture}
-                alt=""
-                className="h-14 w-10 shrink-0 rounded-sm border border-zinc-200 object-cover dark:border-zinc-800"
-              />
-            ) : (
-              <span className="h-14 w-10 shrink-0 rounded-sm bg-zinc-100 dark:bg-zinc-900" />
-            )}
+            {/* The whole picture, upright or wide (a slide), in a square. */}
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center">
+              {file.picture ? (
+                <img
+                  src={file.picture}
+                  alt=""
+                  className="max-h-full max-w-full rounded-sm border border-zinc-200 dark:border-zinc-800"
+                />
+              ) : (
+                <span className="h-14 w-10 rounded-sm bg-zinc-100 dark:bg-zinc-900" />
+              )}
+            </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium" title={file.name}>
                 {file.name}

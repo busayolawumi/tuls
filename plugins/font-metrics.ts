@@ -1,6 +1,6 @@
 // Reads character widths from TrueType fonts: just enough of the format
 // (head, hhea, hmtx and a format 4 cmap) for Tuls to measure text the way
-// LibreOffice will lay it out (see src/engines/libreoffice/word/).
+// LibreOffice will lay it out (see src/engines/libreoffice/ooxml/).
 
 /** The characters measured: printable ASCII, Latin-1 and common punctuation. */
 export const CODE_POINTS = [

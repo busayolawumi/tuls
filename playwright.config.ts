@@ -33,11 +33,14 @@ export default defineConfig({
     // after the rest. Alongside them, other tests slowed into time-outs.
     // So running one spec file runs the rest first: add --no-deps to skip.
     // (`npx playwright test e2e/word-to-pdf.spec.ts --no-deps`)
+    // One at a time: each LibreOffice engine takes over 1 GB, and two or
+    // more at once on an 8 GB laptop got stuck starting.
     {
       name: 'engines',
       use: { ...devices['Desktop Chrome'], colorScheme: 'light' },
       grep: /@engine/,
       dependencies: ['light', 'dark', 'phone'],
+      workers: 1,
     },
   ],
   webServer: {

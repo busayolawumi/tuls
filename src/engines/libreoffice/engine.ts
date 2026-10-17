@@ -1,8 +1,8 @@
 import { Converter } from './converter'
 import { saveEngine } from './download'
 import { OfficeError, officeErrorKind } from './errors'
-import { extensionOf } from './files'
-import { prepareDocx } from './word/prepare'
+import { extensionOf, languageTag } from './files'
+import { prepareOffice } from './ooxml/prepare'
 
 // The shared LibreOffice engine, for Word, Excel and PowerPoint to PDF: saved
 // on the device on first use, started once and kept while the page is open,
@@ -34,6 +34,9 @@ let download: AbortController | undefined
 let generation = 0
 let listener: ((step: EngineStep) => void) | undefined
 let idle: ReturnType<typeof setTimeout> | undefined
+
+/** Logged each time the engine is replaced, with the reason. */
+export const RESTARTED = 'LibreOffice stopped answering, so it was restarted.'
 
 /** Fails with a "stuck" error if `promise` takes longer than `ms`. */
 function within<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -84,6 +87,7 @@ function load(): Promise<Converter> {
     } catch (e) {
       // One more go, unless it couldn't even download.
       if (officeErrorKind(e) === 'network' || started !== generation) throw e
+      console.warn(RESTARTED, e)
       converter = await startOnce(saved)
     }
     if (started !== generation) {
@@ -100,15 +104,19 @@ function load(): Promise<Converter> {
   return loading
 }
 
+// Office Open XML files, which Tuls changes a little before converting.
+const OOXML = ['docx', 'xlsx', 'xlsm', 'pptx', 'ppsx']
+
 /**
- * The document's bytes, with Tuls's changes for Word behaviour LibreOffice
- * lacks (word/prepare.ts). If preparing fails, it's converted as it is.
+ * The document's bytes, with Tuls's changes for Office behaviour
+ * LibreOffice lacks (ooxml/prepare.ts). If preparing fails, it's converted
+ * as it is.
  */
 async function documentBytes(file: File) {
   const bytes = new Uint8Array(await file.arrayBuffer())
-  if (extensionOf(file.name) !== 'docx') return bytes
+  if (!OOXML.includes(extensionOf(file.name))) return bytes
   try {
-    return (await prepareDocx(bytes)) ?? bytes
+    return (await prepareOffice(bytes)) ?? bytes
   } catch (e) {
     console.warn(
       'Couldn’t prepare the document, so it’s converted as it is.',
@@ -135,7 +143,11 @@ export async function convertToPdf(
     try {
       // The converter takes the bytes over, so each go gets its own copy.
       return await within(
-        converter.toPdf(bytes.slice(), extensionOf(file.name)),
+        converter.toPdf(
+          bytes.slice(),
+          extensionOf(file.name),
+          languageTag(navigator.language),
+        ),
         limit,
       )
     } catch (e) {
@@ -144,7 +156,10 @@ export async function convertToPdf(
       // ran out of memory, which would only happen again.
       if (kind === 'stuck' || converter.stopped) {
         stopEngine()
-        if (attempt === 1 && kind !== 'memory') continue
+        if (attempt === 1 && kind !== 'memory') {
+          console.warn(RESTARTED, e)
+          continue
+        }
       }
       throw e
     }

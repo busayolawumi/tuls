@@ -45,7 +45,7 @@
       ]
     },
     {
-      "source": "/(word-to-pdf)",
+      "source": "/(word-to-pdf|excel-to-pdf|powerpoint-to-pdf)",
       "headers": [
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
         { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
