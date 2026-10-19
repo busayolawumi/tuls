@@ -30,7 +30,7 @@ export function pdfErrorKind(error: unknown): PdfErrorKind {
 /** A plain sentence for each kind, for a file that couldn't be opened. */
 export const PDF_ERROR_MESSAGES: Record<PdfErrorKind, string> = {
   password:
-    'This PDF has a password. Tuls can’t open password-protected PDFs yet.',
+    'This PDF has a password. Take it off first with Unlock PDF, then try again.',
   unreadable: 'This file isn’t a PDF, or it’s damaged.',
   memory: 'This PDF is too big for your device to open here.',
   unknown: 'Something went wrong opening this PDF.',

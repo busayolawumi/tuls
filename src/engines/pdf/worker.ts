@@ -1,11 +1,18 @@
 // Runs PDF work in a background thread, so the page stays responsive with
 // big files. Started by client.ts.
+import qpdfWasm from '@neslinesli93/qpdf-wasm/dist/qpdf.wasm?url'
+import { setQpdfWasm } from '../qpdf/qpdf'
 import { cleanPdf } from './clean'
 import { pdfErrorKind } from './errors'
 import { imagesToPdf, type PageImage, type PageSize } from './images'
 import { mergePdfs } from './merge'
 import { organisePdf, type PagePlan } from './organise'
+import { protectPdf, unlockPdf } from './passwords'
+import { hasSignatures } from './signatures'
 import { splitPdf } from './split'
+
+// qpdf's engine is only fetched when a PDF with a password comes along.
+setQpdfWasm(qpdfWasm)
 
 export type WorkerRequest =
   | { id: number; op: 'merge'; files: ArrayBuffer[] }
@@ -13,7 +20,10 @@ export type WorkerRequest =
   | { id: number; op: 'split'; file: ArrayBuffer; groups: number[][] }
   | { id: number; op: 'images'; images: PageImage[]; size: PageSize }
   | { id: number; op: 'clean'; file: ArrayBuffer }
-export type WorkerResult = Uint8Array | Uint8Array[]
+  | { id: number; op: 'protect'; file: ArrayBuffer; password: string }
+  | { id: number; op: 'unlock'; file: ArrayBuffer; password: string }
+  | { id: number; op: 'signed'; file: ArrayBuffer }
+export type WorkerResult = Uint8Array | Uint8Array[] | boolean
 export type WorkerResponse =
   | { id: number; ok: true; result: WorkerResult }
   | {
@@ -35,11 +45,18 @@ function run(request: WorkerRequest): Promise<WorkerResult> {
       return imagesToPdf(request.images, request.size)
     case 'clean':
       return cleanPdf(request.file)
+    case 'protect':
+      return protectPdf(request.file, request.password)
+    case 'unlock':
+      return unlockPdf(request.file, request.password)
+    case 'signed':
+      return hasSignatures(request.file)
   }
 }
 
 /** The result's buffers, to hand over to the page rather than copy. */
 function buffersOf(result: WorkerResult) {
+  if (typeof result === 'boolean') return []
   const arrays = Array.isArray(result) ? result : [result]
   // Each buffer can only be listed once.
   return [...new Set(arrays.map((bytes) => bytes.buffer))]

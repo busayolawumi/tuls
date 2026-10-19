@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { download } from '../lib/download'
 import { fileName } from '../lib/fileName'
 import { formatSize } from '../lib/format'
@@ -38,6 +38,8 @@ type Props = {
    * their own (Word to PDF's documents); the ZIP is then `start`.zip.
    */
   nameField?: boolean
+  /** Another way on, under the Download button, e.g. a new password. */
+  more?: ReactNode
   back?: Action
   startOver: Action
 }
@@ -49,6 +51,7 @@ export function FilesResult({
   count,
   label,
   nameField = true,
+  more,
   back,
   startOver,
 }: Props) {
@@ -119,6 +122,7 @@ export function FilesResult({
           </button>
         )}
       </div>
+      {more}
 
       <ol aria-label={label} className="mt-6 flex flex-col gap-2 text-left">
         {named.map((file) => (

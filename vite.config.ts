@@ -6,6 +6,7 @@ import { defineConfig } from 'vite'
 import { libreOffice } from './plugins/libreoffice.ts'
 import { pdfjsAssets } from './plugins/pdfjs-assets.ts'
 import { pymupdf } from './plugins/pymupdf.ts'
+import { qpdf } from './plugins/qpdf.ts'
 import { siteHeaders } from './plugins/site-headers.ts'
 import { toolPages } from './plugins/tool-pages.ts'
 
@@ -27,6 +28,7 @@ export default defineConfig({
     pdfjsAssets(),
     libreOffice(),
     pymupdf(),
+    qpdf(),
   ],
   define: {
     __FFMPEG_WASM_SIZE__: JSON.stringify(ffmpegWasmSize),
@@ -34,9 +36,13 @@ export default defineConfig({
   // Pre-bundling breaks the worker that ffmpeg.wasm starts. The PDF to Word
   // engine is one plain module, only imported by its worker: found that late,
   // it would make the dev server reload the page.
+  // qpdf, only imported by the PDF worker, is CommonJS: bundled up front, so
+  // the dev server can serve it as a module without reloading the page.
   optimizeDeps: {
     exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util', '@bentopdf/pymupdf-wasm'],
+    include: ['@neslinesli93/qpdf-wasm'],
   },
   // ffmpeg.wasm starts its worker as a module and loads the core with import().
-  worker: { format: 'es' },
+  // Workers are built on their own, with their own plugins.
+  worker: { format: 'es', plugins: () => [qpdf()] },
 })

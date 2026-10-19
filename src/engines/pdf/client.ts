@@ -84,3 +84,24 @@ export function imagesToPdfInBackground(images: PageImage[], size: PageSize) {
 export function cleanPdfInBackground(file: ArrayBuffer) {
   return run<Uint8Array>((id) => ({ id, op: 'clean', file }), [file])
 }
+
+/** Gives a PDF a password, in the background (passwords.ts). The buffer is handed over. */
+export function protectPdfInBackground(file: ArrayBuffer, password: string) {
+  return run<Uint8Array>(
+    (id) => ({ id, op: 'protect', file, password }),
+    [file],
+  )
+}
+
+/**
+ * Takes a PDF's password off, in the background (passwords.ts). A wrong
+ * password rejects with a 'password' PdfError. The buffer is handed over.
+ */
+export function unlockPdfInBackground(file: ArrayBuffer, password: string) {
+  return run<Uint8Array>((id) => ({ id, op: 'unlock', file, password }), [file])
+}
+
+/** Whether someone has signed a PDF (signatures.ts). The buffer is handed over. */
+export function hasSignaturesInBackground(file: ArrayBuffer) {
+  return run<boolean>((id) => ({ id, op: 'signed', file }), [file])
+}

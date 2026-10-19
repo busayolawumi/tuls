@@ -1,5 +1,6 @@
 // What a long job is doing, how far it's got (if it can tell), a note under
-// the bar, and Cancel. Used by the converters with big engines.
+// the bar, and Cancel. Used by the converters with big engines, and the
+// password tools.
 
 type Props = {
   /** What's happening, e.g. "Converting report.pdf…". */
@@ -8,10 +9,18 @@ type Props = {
   ratio?: number
   /** A line under the bar, e.g. the download's size. */
   note?: string
+  /** The bar's name for screen readers. */
+  barLabel?: string
   onCancel: () => void
 }
 
-export function ProgressPanel({ label, ratio, note, onCancel }: Props) {
+export function ProgressPanel({
+  label,
+  ratio,
+  note,
+  barLabel = 'Converting',
+  onCancel,
+}: Props) {
   const percent = ratio === undefined ? undefined : Math.round(ratio * 100)
   return (
     <div className="mt-10 w-full max-w-xl text-left">
@@ -27,7 +36,7 @@ export function ProgressPanel({ label, ratio, note, onCancel }: Props) {
       </div>
       <div
         role="progressbar"
-        aria-label="Converting"
+        aria-label={barLabel}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={percent}

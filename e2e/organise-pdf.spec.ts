@@ -152,7 +152,7 @@ test('a password-protected PDF gets a plain message', async ({ page }) => {
     .locator('input[type=file]')
     .setInputFiles(await makePdf('locked.pdf', [300], 'secret'))
   await expect(page.getByRole('alert')).toHaveText(
-    'This PDF has a password. Tuls can’t open password-protected PDFs yet.',
+    'This PDF has a password. Take it off first with Unlock PDF, then try again.',
   )
 })
 

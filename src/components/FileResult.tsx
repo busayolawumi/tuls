@@ -20,6 +20,8 @@ type Props = {
   /** A short line under the preview, e.g. "12 pages · 2.4 MB". */
   details: string
   preview?: ReactNode
+  /** Another way on, under the Download button, e.g. a new password. */
+  more?: ReactNode
   back?: Action
   startOver: Action
 }
@@ -31,6 +33,7 @@ export function FileResult({
   downloadLabel,
   details,
   preview,
+  more,
   back,
   startOver,
 }: Props) {
@@ -73,6 +76,7 @@ export function FileResult({
           </button>
         )}
       </div>
+      {more}
 
       <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
         {back && (

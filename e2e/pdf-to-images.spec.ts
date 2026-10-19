@@ -179,7 +179,7 @@ test('a password-protected PDF, or too many pages, gets a plain message', async 
   const input = page.locator('input[type=file]')
   await input.setInputFiles(await makePdf('locked.pdf', [[72, 72]], 'secret'))
   await expect(page.getByRole('alert')).toHaveText(
-    'This PDF has a password. Tuls can’t open password-protected PDFs yet.',
+    'This PDF has a password. Take it off first with Unlock PDF, then try again.',
   )
   await input.setInputFiles(
     await makePdf('long.pdf', Array(301).fill([72, 72])),

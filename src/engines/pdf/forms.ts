@@ -21,6 +21,14 @@ export function flattenForm(doc: PDFDocument) {
   try {
     const form = doc.getForm()
     for (const field of form.getFields()) {
+      // Fields on no page can't be seen, and pdf-lib can't flatten them: it
+      // logs an error for each. Apple's apps leave such copies behind when
+      // they save a form. They're taken out of the form's list directly,
+      // since removeField looks for their page too.
+      if (!onAPage(doc, field)) {
+        form.acroForm.removeField(field.acroField)
+        continue
+      }
       // Buttons (Print, Clear form) hold no answers and won't work in the new
       // PDF, and hidden fields would show once drawn, so both go.
       if (field instanceof PDFButton || isHidden(field)) form.removeField(field)
@@ -60,4 +68,15 @@ function isHidden(field: PDFField) {
     widgets.length > 0 &&
     widgets.every((widget) => widget.hasFlag(HIDDEN) || widget.hasFlag(NO_VIEW))
   )
+}
+
+/** Whether any of a field's widgets is on one of the PDF's pages. */
+function onAPage(doc: PDFDocument, field: PDFField) {
+  const pages = new Set(doc.getPages().map((page) => page.ref))
+  return field.acroField.getWidgets().some((widget) => {
+    const page = widget.P()
+    if (page && pages.has(page)) return true
+    const ref = doc.context.getObjectRef(widget.dict)
+    return ref !== undefined && doc.findPageForAnnotationRef(ref) !== undefined
+  })
 }

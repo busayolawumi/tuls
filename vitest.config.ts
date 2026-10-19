@@ -6,5 +6,7 @@ export default defineConfig({
   test: {
     include: ['src/**/*.test.ts', 'plugins/**/*.test.ts'],
     environment: 'node',
+    // Where qpdf's engine is, for the PDF password code.
+    setupFiles: ['./vitest.setup.ts'],
   },
 })

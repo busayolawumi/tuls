@@ -9,7 +9,7 @@ import {
   type SaveOptions,
 } from '@cantoo/pdf-lib'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { PdfError } from './errors'
 import { mergePdfs } from './merge'
 
@@ -231,5 +231,31 @@ describe('mergePdfs with forms', () => {
     const text = await firstPageText(await mergePdfs([filled]))
     expect(text).not.toContain('Print this form')
     expect(text).not.toContain('Hidden answer')
+  })
+  it('quietly leaves out fields on no page', async () => {
+    // As Apple's apps save forms: the form lists a copy of the field that
+    // no page shows.
+    const filled = await makeForm((form, page, doc) => {
+      const shown = form.createTextField('shown')
+      shown.addToPage(page, place)
+      shown.setText('On the page')
+      const lost = form.createTextField('lost')
+      lost.addToPage(page, { ...place, y: 250 })
+      lost.setText('On no page')
+      // On no page's list, and naming no page itself.
+      for (const widget of lost.acroField.getWidgets()) {
+        page.node.removeAnnot(doc.context.getObjectRef(widget.dict)!)
+        widget.dict.delete(PDFName.of('P'))
+      }
+    })
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      const text = await firstPageText(await mergePdfs([filled]))
+      expect(text).toContain('On the page')
+      expect(text).not.toContain('On no page')
+      expect(errors).not.toHaveBeenCalled()
+    } finally {
+      errors.mockRestore()
+    }
   })
 })

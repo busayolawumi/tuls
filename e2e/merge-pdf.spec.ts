@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { PDFDocument } from '@cantoo/pdf-lib'
 import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
@@ -112,6 +113,39 @@ test('a password-protected PDF is named, and has to go before merging', async ({
   await expect(
     page.getByText('Add at least one more PDF to merge.'),
   ).toBeVisible()
+})
+
+test('a PDF locked against changes by Apple merges into a readable PDF', async ({
+  page,
+}) => {
+  // pdf-lib alone garbled its text (src/engines/pdf/fixtures/README.md);
+  // qpdf takes the lock off first, in the PDF worker.
+  const errors = watchErrors(page)
+  await page.goto('/merge-pdf')
+  await page.locator('input[type=file]').setInputFiles([
+    {
+      name: 'statement.pdf',
+      mimeType: 'application/pdf',
+      buffer: readFileSync(
+        'src/engines/pdf/fixtures/change-locked-by-apple.pdf',
+      ),
+    },
+    await makePdf('b.pdf', 1, [500, 500]),
+  ])
+  await page.getByRole('button', { name: 'Merge 2 PDFs' }).click()
+  const download = page.getByRole('link', { name: 'Download PDF' })
+  const href = (await download.getAttribute('href'))!
+  const base64 = await page.evaluate(async (url) => {
+    const bytes = new Uint8Array(await (await fetch(url)).arrayBuffer())
+    let text = ''
+    for (const byte of bytes) text += String.fromCharCode(byte)
+    return btoa(text)
+  }, href)
+  const bytes = Buffer.from(base64, 'base64')
+  expect(bytes.toString('latin1')).not.toContain('/Encrypt')
+  const merged = await PDFDocument.load(bytes)
+  expect(merged.getPages().map((p) => p.getSize().width)).toEqual([400, 500])
+  expect(errors).toEqual([])
 })
 
 test('files that aren’t PDFs are turned down by name', async ({ page }) => {

@@ -3,6 +3,7 @@ import {
   checkPdf,
   MAX_FILE_SIZE,
   outputName,
+  outputNames,
   pagesLabel,
   pdfBase,
 } from './files'
@@ -41,6 +42,18 @@ describe('outputName', () => {
     expect(outputName('report.pdf', 'merged')).toBe('report-merged.pdf')
     expect(outputName('Scan 2.PDF', 'organised')).toBe('Scan 2-organised.pdf')
     expect(outputName('.pdf', 'merged')).toBe('document-merged.pdf')
+  })
+})
+
+describe('outputNames', () => {
+  it('adds the suffix, and numbers same names', () => {
+    expect(
+      outputNames(['report.pdf', 'Report.PDF', 'notes.pdf'], 'protected'),
+    ).toEqual([
+      'report-protected.pdf',
+      'Report-protected (2).pdf',
+      'notes-protected.pdf',
+    ])
   })
 })
 

@@ -1,4 +1,5 @@
 import { formatSize } from '../../lib/format'
+import { outputNames as sharedNames } from '../../lib/outputNames'
 
 // What every PDF tool checks before opening a file, and how it names what
 // it makes.
@@ -32,4 +33,15 @@ export function outputName(original: string, suffix: string) {
 /** "1 page", "12 pages". */
 export function pagesLabel(count: number) {
   return `${count} ${count === 1 ? 'page' : 'pages'}`
+}
+
+/**
+ * New PDFs' names from the originals', e.g. report.pdf → report-protected.pdf.
+ * Same names get a number, so a ZIP doesn't lose any: report-protected (2).pdf.
+ */
+export function outputNames(originals: string[], suffix: string) {
+  return sharedNames(
+    originals.map((name) => outputName(name, suffix)),
+    'pdf',
+  )
 }

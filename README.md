@@ -12,6 +12,8 @@ Work in progress.
 - **Split PDF**: split a PDF into several smaller ones, at the pages you choose.
 - **Images to PDF**: turn photos, scans and screenshots into one PDF, without their location and camera details.
 - **PDF to images**: turn the pages of a PDF into JPG or PNG images.
+- **Protect PDF**: add a password to PDFs, with AES-256, using [qpdf](https://qpdf.sourceforge.io) compiled to WebAssembly. Whoever has the password can open, print and copy the PDF. Accented letters work on every device, and the page warns about characters iPhones and Macs can't take.
+- **Unlock PDF**: take the password off PDFs you can open, with qpdf.
 - **Word to PDF**: turn Word documents (DOCX, DOC, ODT, RTF) into PDFs with LibreOffice, compiled to WebAssembly and running in the browser. The PDFs show the document as final: tracked changes accepted, no comments, and no author or title. Tuls adds two things LibreOffice lacks, so the layout matches Word's more closely: a Symbol font for Word's bullets, and Word's underlined trailing spaces.
 - **PDF to Word**: turn PDFs into Word documents you can edit, with PyMuPDF and pdf2docx (Python, running in the browser through Pyodide). It works best with PDFs made from documents. Scanned pages are pointed out before converting, since they stay pictures, and the Word files carry none of the PDF's details.
 - **Excel to PDF**: turn spreadsheets (XLSX, XLSM, XLS, ODS) into PDFs, laid out as they'd print: each sheet's own page setup, print areas and scaling, without hidden sheets or comments. Sheets that don't say what paper they use, and "short date" cells, follow the visitor's region, as Excel does.

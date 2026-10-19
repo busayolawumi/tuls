@@ -34,7 +34,7 @@ export function wordErrorKind(error: unknown): WordErrorKind {
 /** A plain sentence for each kind, about the PDF that failed. */
 export const WORD_ERROR_MESSAGES: Record<WordErrorKind, string> = {
   password:
-    'It has a password. Remove the password in the app it came from, then try again.',
+    'It has a password. Take it off first with Unlock PDF, then try again.',
   unreadable: 'It couldn’t be opened. It may be damaged.',
   memory:
     'It needs more memory than this browser could give it. A shorter PDF, or a computer, should work.',
