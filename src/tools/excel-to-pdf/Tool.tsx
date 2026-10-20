@@ -7,8 +7,8 @@ function ExcelToPdf() {
       manifest={manifest}
       one="an Excel spreadsheet"
       many="Excel spreadsheets"
-      kinds="XLSX, XLSM, XLS or ODS"
-      intro="Turn Excel spreadsheets into PDFs, laid out as they’d print. LibreOffice does the work, right here in your browser."
+      kinds="XLSX, XLSM, XLS, ODS or CSV"
+      intro="Turn Excel spreadsheets into PDFs, laid out as they’d print, and CSV files into tidy tables that fit the page. LibreOffice does the work, right here in your browser."
     />
   )
 }

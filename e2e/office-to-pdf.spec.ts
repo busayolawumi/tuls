@@ -22,15 +22,18 @@ async function bytesOf(page: Page, href: string) {
 /** Everything a PDF says, its pages' sizes in points, and its fonts. */
 async function readPdf(bytes: Uint8Array) {
   const doc = await getDocument({ data: new Uint8Array(bytes) }).promise
-  let text = ''
+  const pages: string[] = []
   const sizes: string[] = []
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i)
     sizes.push(`${Math.round(page.view[2])}×${Math.round(page.view[3])}`)
-    text += (await page.getTextContent()).items
-      .map((item) => ('str' in item ? item.str : ''))
-      .join(' ')
+    pages.push(
+      (await page.getTextContent()).items
+        .map((item) => ('str' in item ? item.str : ''))
+        .join(' '),
+    )
   }
+  const text = pages.join(' ')
   await doc.loadingTask.destroy()
   const pdf = await PDFDocument.load(bytes, { updateMetadata: false })
   const fonts = pdf.context
@@ -42,7 +45,14 @@ async function readPdf(bytes: Uint8Array) {
         String(object.get(PDFName.of('Type'))) === '/Font',
     )
     .map((font) => String(font.get(PDFName.of('BaseFont'))))
-  return { text, sizes, fonts, author: pdf.getAuthor(), title: pdf.getTitle() }
+  return {
+    text,
+    pages,
+    sizes,
+    fonts,
+    author: pdf.getAuthor(),
+    title: pdf.getTitle(),
+  }
 }
 
 // The page's warnings, attached to a failed test's report. The engine says
@@ -116,6 +126,52 @@ test(
     expect(sheet.author).toBeUndefined()
     expect(sheet.title).toBeUndefined()
     await expect(page.getByText(/^1 page · /)).toBeVisible()
+
+    // CSVs, with the engine kept: a German export (semicolons, decimal
+    // commas, Windows-1252) and a wide one.
+    await page
+      .getByRole('button', { name: 'Convert more Excel spreadsheets' })
+      .click()
+    const german = [
+      'Datum;Buchungstext;Betrag',
+      ...Array.from(
+        { length: 120 },
+        (_, i) =>
+          `${String(1 + (i % 28)).padStart(2, '0')}.01.2026;Bäckerei ${i};1.234,50`,
+      ),
+    ].join('\r\n')
+    const columns = Array.from({ length: 14 }, (_, i) => `Heading${i + 1}`)
+    const wide = [
+      columns.join(','),
+      ...Array.from({ length: 5 }, (_, r) =>
+        columns.map((_, c) => `${r * 14 + c}.25`).join(','),
+      ),
+    ].join('\n')
+    await page.locator('input[type=file]').setInputFiles([
+      {
+        name: 'konto.csv',
+        mimeType: 'text/csv',
+        buffer: Buffer.from(german, 'latin1'),
+      },
+      { name: 'wide.csv', mimeType: 'text/csv', buffer: Buffer.from(wide) },
+    ])
+    const csvPdf = async (name: string) => {
+      const link = page.getByRole('link', { name: `Download ${name}` })
+      await expect(link).toBeVisible({ timeout: 180_000 })
+      return readPdf(await bytesOf(page, (await link.getAttribute('href'))!))
+    }
+    const konto = await csvPdf('konto.pdf')
+    // A4 for a British visitor, the heading on every page, real numbers.
+    expect(konto.sizes.length).toBeGreaterThan(1)
+    expect(new Set(konto.sizes)).toEqual(new Set(['595×842']))
+    for (const text of konto.pages) expect(text).toContain('Buchungstext')
+    expect(konto.text).toContain('Bäckerei 7')
+    expect(konto.text).toContain('1,234.50')
+    expect(konto.text).not.toContain(';')
+    const wideSheet = await csvPdf('wide.pdf')
+    // Too wide for portrait: landscape, every column on the one page.
+    expect(wideSheet.sizes).toEqual(['842×595'])
+    for (const heading of columns) expect(wideSheet.text).toContain(heading)
 
     // To PowerPoint to PDF through the home page, without reloading: the page
     // is already isolated, so the engine is kept.

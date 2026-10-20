@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  CSV_EXTENSIONS,
+  CsvError,
+  csvToXlsx,
+} from '../../engines/libreoffice/csv'
+import {
   DOWNLOAD_SIZE,
   isEngineSaved,
 } from '../../engines/libreoffice/download'
@@ -179,8 +184,23 @@ export function OfficeToPdf({ manifest, one, many, kinds, intro }: Props) {
           })
           continue
         }
+        let input = file
+        if (CSV_EXTENSIONS.includes(extensionOf(file.name))) {
+          try {
+            const xlsx = csvToXlsx(
+              new Uint8Array(await file.arrayBuffer()),
+              file.name,
+              navigator.language,
+            )
+            input = new File([xlsx], `${file.name}.xlsx`)
+          } catch (e) {
+            if (!(e instanceof CsvError)) throw e
+            problems.push({ name: file.name, message: e.message })
+            continue
+          }
+        }
         try {
-          const pdf = await convertToPdf(file, show)
+          const pdf = await convertToPdf(input, show)
           if (!wanted()) return abandon()
           // LibreOffice copies the document's title and author into the
           // PDF, and names itself as its maker.
