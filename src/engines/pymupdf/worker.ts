@@ -6,7 +6,8 @@
 // map and fixes how pdf2docx writes fonts, tables, pictures, headers and
 // footers. Compress PDF needs only PyMuPDF, so it has a light start, without
 // the package's NumPy, OpenCV and pdf2docx, and its own step
-// (tuls_compress.py). Started by client.ts.
+// (tuls_compress.py). PDF to Excel uses the light start too, with
+// tuls_tables.py. Started by client.ts.
 import { PyMuPDF } from '@bentopdf/pymupdf-wasm'
 import { cleanDocx } from './cleanDocx'
 import { engineFetch } from './fetch'
@@ -14,19 +15,30 @@ import officeFonts from './officeFonts.json?raw'
 import { progressReader, type Progress } from './progress'
 import tulsCompress from './tuls_compress.py?raw'
 import tulsPdf2docx from './tuls_pdf2docx.py?raw'
+import tulsTables from './tuls_tables.py?raw'
+import tulsTextMap from './tuls_text_map.py?raw'
 
 /** How much Compress PDF shrinks images (tuls_compress.py's LEVELS). */
 export type CompressLevel = 'recommended' | 'smallest'
+
+/** A table found in a PDF (tuls_tables.py). `null` is a merged cell. */
+export type FoundTable = {
+  pages: number[]
+  rows: (string | null)[][]
+  header: number
+}
 
 export type WorkerRequest =
   | { id: number; type: 'start'; light?: boolean }
   | { id: number; type: 'convert'; pdf: ArrayBuffer }
   | { id: number; type: 'compress'; pdf: ArrayBuffer; level: CompressLevel }
+  | { id: number; type: 'tables'; pdf: ArrayBuffer }
 export type WorkerReply =
   | { id: number; type: 'ready' }
   | { id: number; type: 'progress'; progress: Progress }
   | { id: number; type: 'result'; docx: ArrayBuffer; leftOut: number[] }
   | { id: number; type: 'compressed'; pdf: ArrayBuffer }
+  | { id: number; type: 'tables'; tables: FoundTable[] }
   | { id: number; type: 'error'; error: string }
 
 type PyCallable = ((...args: unknown[]) => unknown) & { destroy(): void }
@@ -80,7 +92,10 @@ function start(light: boolean) {
     pyodide.setStderr({ batched: (line) => onLine(line) })
     pyodide.setStdout({ batched: () => {} })
     pyodide.runPython('import pymupdf\npymupdf.TOOLS.store_shrink(100)')
+    pyodide.runPython(tulsTextMap)
     pyodide.runPython(tulsCompress)
+    pyodide.runPython(tulsTables)
+    call(pyodide, 'configure_ligatures', officeFonts)
     if (!light) {
       pyodide.runPython(tulsPdf2docx)
       call(pyodide, 'configure', officeFonts)
@@ -111,6 +126,17 @@ self.onmessage = async ({ data }: MessageEvent<WorkerRequest>) => {
   try {
     const pyodide = await start(data.type === 'start' && data.light === true)
     if (data.type === 'start') return reply({ id: data.id, type: 'ready' })
+    if (data.type === 'tables') {
+      pyodide.FS.writeFile(INPUT, new Uint8Array(data.pdf))
+      try {
+        const { tables } = JSON.parse(
+          String(call(pyodide, 'tables', INPUT)),
+        ) as { tables: FoundTable[] }
+        return reply({ id: data.id, type: 'tables', tables })
+      } finally {
+        pyodide.FS.unlink(INPUT)
+      }
+    }
     if (data.type === 'compress') {
       pyodide.FS.writeFile(INPUT, new Uint8Array(data.pdf))
       try {

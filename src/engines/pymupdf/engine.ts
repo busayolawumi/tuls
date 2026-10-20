@@ -3,7 +3,7 @@ import { Converter, type Converted } from './client'
 import { saveEngine, saveLightEngine } from './download'
 import { WordError, wordErrorKind } from './errors'
 import type { Progress } from './progress'
-import type { CompressLevel } from './worker'
+import type { CompressLevel, FoundTable } from './worker'
 
 // The PDF to Word engine: saved on the device on first use, started once and
 // kept while the page is open, and watched. Every step has a time limit. A
@@ -17,6 +17,7 @@ export type EngineStep =
   | { step: 'start' }
   | { step: 'convert'; progress?: Progress }
   | { step: 'compress' }
+  | { step: 'tables' }
 
 // From the device, starting took 4.5–7.4 s on a laptop and 6.7 s on an
 // iPhone 15: Python, then PyMuPDF, NumPy and OpenCV.
@@ -31,6 +32,8 @@ const CONVERT_LIMIT_PER_PAGE = 6_000
 // spent on images, so the limit goes by size.
 const COMPRESS_LIMIT = 60_000
 const COMPRESS_LIMIT_PER_MB = 2_000
+const TABLES_LIMIT = 60_000
+const TABLES_LIMIT_PER_PAGE = 1_000
 // How long the engine stays after the page using it has gone.
 const KEEP_FOR = 60_000
 
@@ -149,6 +152,28 @@ export async function compressPdf(
     return await within(converter.compress(pdf, level), limit, stuck(limit))
   } catch (e) {
     // A stuck or crashed engine is no use for the next PDF.
+    if (wordErrorKind(e) === 'stuck' || converter.stopped) stopEngine()
+    throw e
+  }
+}
+
+/**
+ * Finds the tables in a PDF of `pages` pages (tuls_tables.py), downloading
+ * and starting the light engine first if needed.
+ */
+export async function findTables(
+  file: File,
+  pages: number,
+  onStep: (step: EngineStep) => void,
+): Promise<FoundTable[]> {
+  listener = onStep
+  const pdf = await file.arrayBuffer()
+  const converter = await load(true)
+  onStep({ step: 'tables' })
+  const limit = TABLES_LIMIT + TABLES_LIMIT_PER_PAGE * pages
+  try {
+    return await within(converter.tables(pdf), limit, stuck(limit))
+  } catch (e) {
     if (wordErrorKind(e) === 'stuck' || converter.stopped) stopEngine()
     throw e
   }

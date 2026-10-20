@@ -4,6 +4,7 @@ import { manifest as excelToPdf } from './excel-to-pdf/manifest.ts'
 import { manifest as imagesToPdf } from './images-to-pdf/manifest.ts'
 import { manifest as mergePdf } from './merge-pdf/manifest.ts'
 import { manifest as organisePdf } from './organise-pdf/manifest.ts'
+import { manifest as pdfToExcel } from './pdf-to-excel/manifest.ts'
 import { manifest as pdfToImages } from './pdf-to-images/manifest.ts'
 import { manifest as pdfToWord } from './pdf-to-word/manifest.ts'
 import { manifest as powerpointToPdf } from './powerpoint-to-pdf/manifest.ts'
@@ -29,6 +30,7 @@ export const tools: ToolManifest[] = [
   compressPdf,
   wordToPdf,
   pdfToWord,
+  pdfToExcel,
   excelToPdf,
   powerpointToPdf,
 ]

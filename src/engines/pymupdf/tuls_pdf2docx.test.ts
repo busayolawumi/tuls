@@ -11,7 +11,10 @@ import { ALL_WHEELS, loadPython, type Python } from './python.node-testing'
 // PyMuPDF.
 
 async function loadPdf2docx() {
-  const python = await loadPython(ALL_WHEELS, ['tuls_pdf2docx.py'])
+  const python = await loadPython(ALL_WHEELS, [
+    'tuls_text_map.py',
+    'tuls_pdf2docx.py',
+  ])
   const here = dirname(fileURLToPath(import.meta.url))
   python.globals.get('configure')(
     readFileSync(join(here, 'officeFonts.json'), 'utf8'),

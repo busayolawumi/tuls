@@ -3,7 +3,12 @@ import type { Progress } from './progress'
 
 /** A Word file, and the PDF's pages pdf2docx couldn't convert (from 1). */
 export type Converted = { docx: Uint8Array<ArrayBuffer>; leftOut: number[] }
-import type { CompressLevel, WorkerReply, WorkerRequest } from './worker'
+import type {
+  CompressLevel,
+  FoundTable,
+  WorkerReply,
+  WorkerRequest,
+} from './worker'
 
 // The page's side of the PDF to Word worker (worker.ts): one worker, one
 // job at a time. A worker that crashes, often for want of memory, fails its
@@ -41,7 +46,9 @@ export class Converter {
             ? { docx: new Uint8Array(data.docx), leftOut: data.leftOut }
             : data.type === 'compressed'
               ? new Uint8Array(data.pdf)
-              : null,
+              : data.type === 'tables'
+                ? data.tables
+                : null,
         )
       }
     }
@@ -96,6 +103,11 @@ export class Converter {
       { type: 'compress', pdf, level },
       [pdf],
     )
+  }
+
+  /** Finds the tables in a PDF. Its bytes are handed over. */
+  tables(pdf: ArrayBuffer) {
+    return this.send<FoundTable[]>({ type: 'tables', pdf }, [pdf])
   }
 
   /** Makes a PDF into a Word file. The PDF's bytes are handed over. */

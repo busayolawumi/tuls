@@ -16,12 +16,15 @@ export type Inspected = {
 // Big enough for the result's preview; the list's thumbnails are smaller.
 const PICTURE_SIZE = 600
 
-export async function inspectPdf(file: File): Promise<Inspected> {
+export async function inspectPdf(
+  file: File,
+  maxPages = MAX_PAGES,
+): Promise<Inspected> {
   const doc = await openPdf(await file.arrayBuffer())
   try {
     const scanned: number[] = []
     // Too long to convert anyway: no need to read its text.
-    if (doc.numPages <= MAX_PAGES) {
+    if (doc.numPages <= maxPages) {
       for (let number = 1; number <= doc.numPages; number++) {
         const page = await doc.getPage(number)
         try {
