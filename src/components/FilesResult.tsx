@@ -40,6 +40,8 @@ type Props = {
   nameField?: boolean
   /** Another way on, under the Download button, e.g. a new password. */
   more?: ReactNode
+  /** Anything more about the result, before the links back. */
+  after?: ReactNode
   back?: Action
   startOver: Action
 }
@@ -52,6 +54,7 @@ export function FilesResult({
   label,
   nameField = true,
   more,
+  after,
   back,
   startOver,
 }: Props) {
@@ -161,6 +164,8 @@ export function FilesResult({
           </li>
         ))}
       </ol>
+
+      {after}
 
       <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
         {back && (

@@ -22,6 +22,8 @@ type Props = {
   preview?: ReactNode
   /** Another way on, under the Download button, e.g. a new password. */
   more?: ReactNode
+  /** Anything more about the result, before the links back. */
+  after?: ReactNode
   back?: Action
   startOver: Action
 }
@@ -34,6 +36,7 @@ export function FileResult({
   details,
   preview,
   more,
+  after,
   back,
   startOver,
 }: Props) {
@@ -77,6 +80,8 @@ export function FileResult({
         )}
       </div>
       {more}
+
+      {after}
 
       <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
         {back && (

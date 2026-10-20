@@ -34,6 +34,10 @@ declare const __PYMUPDF__: {
   files: { url: string; size: number }[]
   /** Those served gzipped, by the name Pyodide asks for (without .gz). */
   gzipped: string[]
+  /** The files a light start (PyMuPDF only, for Compress PDF) needs: URLs from `files`. */
+  light: string[]
+  /** The PyMuPDF wheel's name, which a light start loads. */
+  wheel: string
 }
 
 /** The engine's font widths, for measuring text (plugins/libreoffice.ts). */

@@ -32,6 +32,23 @@ describe('the PDF to Word engine’s files', () => {
     }
   })
 
+  it('lists a light start’s files: Python and PyMuPDF only, about 23 MB', async () => {
+    const { info } = await prepareEngine()
+    const names = info.light.map((url) => url.slice(PYMUPDF_DIR.length))
+    expect(names.sort()).toEqual([
+      info.wheel,
+      'pyodide-lock.json',
+      'pyodide.asm.wasm.gz',
+      'python_stdlib.zip',
+    ])
+    expect(info.wheel).toMatch(/^pymupdf-.*\.whl$/)
+    const size = info.files
+      .filter((file) => info.light.includes(file.url))
+      .reduce((sum, file) => sum + file.size, 0)
+    expect(size / 1e6).toBeGreaterThan(20)
+    expect(size / 1e6).toBeLessThan(25)
+  })
+
   it('gzips only what compresses well', async () => {
     const { info } = await prepareEngine()
     expect(info.gzipped).toEqual([

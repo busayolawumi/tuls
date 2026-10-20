@@ -47,7 +47,18 @@ export type PyMuPdfInfo = {
   files: { url: string; size: number }[]
   /** Those served gzipped, by the name Pyodide asks for (without .gz). */
   gzipped: string[]
+  /**
+   * The files a light start needs (Pyodide and PyMuPDF only, for Compress
+   * PDF): URLs from `files`.
+   */
+  light: string[]
+  /** The PyMuPDF wheel's name, which a light start loads. */
+  wheel: string
 }
+
+// What a light start loads: Python, its standard library and PyMuPDF.
+const LIGHT =
+  /^(pyodide\.asm\.wasm|python_stdlib\.zip|pyodide-lock\.json|pymupdf-[^/]*\.whl)$/
 
 type Engine = {
   /** Every served file, by its name in PYMUPDF_DIR, and where it is on disk. */
@@ -73,9 +84,24 @@ export async function prepareEngine(): Promise<Engine> {
     served.set(servedName, path)
     files.push({ url: PYMUPDF_DIR + servedName, size: (await stat(path)).size })
   }
+  const names = [...served.keys()].map((name) => name.replace(/\.gz$/, ''))
+  const wheel = names.find((name) => /^pymupdf-.*\.whl$/.test(name))
+  if (!wheel) throw new Error('The PyMuPDF wheel is missing')
+  const light = files
+    .filter(({ url }) =>
+      LIGHT.test(url.slice(PYMUPDF_DIR.length).replace(/\.gz$/, '')),
+    )
+    .map(({ url }) => url)
   return {
     served,
-    info: { dir: PYMUPDF_DIR, cache: PYMUPDF_CACHE, files, gzipped },
+    info: {
+      dir: PYMUPDF_DIR,
+      cache: PYMUPDF_CACHE,
+      files,
+      gzipped,
+      light,
+      wheel,
+    },
   }
 }
 

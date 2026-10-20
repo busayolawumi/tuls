@@ -19,9 +19,20 @@ type Options = {
   oldCopies: RegExp
   /** The engine's own error for a failed download. */
   error: (kind: SaveFailure, cause: unknown) => Error
+  /**
+   * Only some of the engine's files (PyMuPDF's light start): the cache's
+   * other files belong to the whole engine, so they're kept.
+   */
+  part?: boolean
 }
 
-export function engineCache({ cache: name, files, oldCopies, error }: Options) {
+export function engineCache({
+  cache: name,
+  files,
+  oldCopies,
+  error,
+  part = false,
+}: Options) {
   /** The first-time download, in bytes. */
   const size = files.reduce((sum, file) => sum + file.size, 0)
 
@@ -45,6 +56,7 @@ export function engineCache({ cache: name, files, oldCopies, error }: Options) {
       for (const other of await caches.keys()) {
         if (oldCopies.test(other) && other !== name) await caches.delete(other)
       }
+      if (part) return
       const current = files.map((file) => new URL(file.url, location.href).href)
       for (const request of await cache.keys()) {
         if (!current.includes(request.url)) await cache.delete(request)

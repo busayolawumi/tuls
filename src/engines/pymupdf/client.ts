@@ -3,7 +3,7 @@ import type { Progress } from './progress'
 
 /** A Word file, and the PDF's pages pdf2docx couldn't convert (from 1). */
 export type Converted = { docx: Uint8Array<ArrayBuffer>; leftOut: number[] }
-import type { WorkerReply, WorkerRequest } from './worker'
+import type { CompressLevel, WorkerReply, WorkerRequest } from './worker'
 
 // The page's side of the PDF to Word worker (worker.ts): one worker, one
 // job at a time. A worker that crashes, often for want of memory, fails its
@@ -39,7 +39,9 @@ export class Converter {
         job.resolve(
           data.type === 'result'
             ? { docx: new Uint8Array(data.docx), leftOut: data.leftOut }
-            : null,
+            : data.type === 'compressed'
+              ? new Uint8Array(data.pdf)
+              : null,
         )
       }
     }
@@ -80,9 +82,20 @@ export class Converter {
     })
   }
 
-  /** Loads Python and the packages. On a first visit this includes the download. */
-  start() {
-    return this.send<void>({ type: 'start' })
+  /**
+   * Loads Python and the packages, or with `light`, only PyMuPDF (Compress
+   * PDF). Without a saved engine, this includes the download.
+   */
+  start(light = false) {
+    return this.send<void>({ type: 'start', light })
+  }
+
+  /** Makes a smaller copy of a PDF. Its bytes are handed over. */
+  compress(pdf: ArrayBuffer, level: CompressLevel) {
+    return this.send<Uint8Array<ArrayBuffer>>(
+      { type: 'compress', pdf, level },
+      [pdf],
+    )
   }
 
   /** Makes a PDF into a Word file. The PDF's bytes are handed over. */

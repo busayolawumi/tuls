@@ -1,78 +1,18 @@
-import {
-  copyFileSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  symlinkSync,
-  writeFileSync,
-} from 'node:fs'
-import { tmpdir } from 'node:os'
+import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { strFromU8, unzipSync } from 'fflate'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { TINY_JPEG } from '../../lib/images.testing'
+import { ALL_WHEELS, loadPython, type Python } from './python.node-testing'
 
 // tuls_pdf2docx.py, run in the PDF to Word engine's own Python (Pyodide,
 // PyMuPDF and pdf2docx: the files the browser loads), on PDFs made here with
 // PyMuPDF.
 
-type Python = {
-  runPython(code: string): unknown
-  globals: { get(name: string): (...args: unknown[]) => unknown }
-  FS: {
-    writeFile(path: string, data: Uint8Array | string): void
-    readFile(path: string): Uint8Array
-  }
-}
-
-const WHEELS =
-  /^(pymupdf|fonttools|lxml|numpy|opencv_python|pdf2docx|python_docx|typing_extensions)-.*\.whl$/
-
-async function loadPython(): Promise<Python> {
-  const assets = join(
-    dirname(
-      dirname(fileURLToPath(import.meta.resolve('@bentopdf/pymupdf-wasm'))),
-    ),
-    'assets',
-  )
-  // The package says its files are ES modules, but Pyodide's own script
-  // isn't one, and Node goes by the nearest package.json: a folder of its
-  // own, with the big files linked rather than copied.
-  const folder = mkdtempSync(join(tmpdir(), 'tuls-pyodide-'))
-  for (const name of readdirSync(assets)) {
-    const copy = name === 'pyodide.asm.js' ? copyFileSync : symlinkSync
-    copy(join(assets, name), join(folder, name))
-  }
-  writeFileSync(join(folder, 'package.json'), '{"type":"commonjs"}')
-  // Without its source map comment, which points at a file not shipped.
-  writeFileSync(
-    join(folder, 'pyodide.mjs'),
-    readFileSync(join(assets, 'pyodide.js'), 'utf8').replace(
-      /\/\/# sourceMappingURL=.*$/m,
-      '',
-    ),
-  )
-  const { loadPyodide } = (await import(join(folder, 'pyodide.mjs'))) as {
-    loadPyodide(options: object): Promise<
-      Python & {
-        loadPackage(urls: string[], options: object): Promise<void>
-      }
-    >
-  }
-  const python = await loadPyodide({
-    indexURL: `${folder}/`,
-    stdout: () => {},
-    stderr: () => {},
-  })
-  await python.loadPackage(
-    readdirSync(assets)
-      .filter((name) => WHEELS.test(name))
-      .map((name) => join(folder, name)),
-    { messageCallback: () => {} },
-  )
+async function loadPdf2docx() {
+  const python = await loadPython(ALL_WHEELS, ['tuls_pdf2docx.py'])
   const here = dirname(fileURLToPath(import.meta.url))
-  python.runPython(readFileSync(join(here, 'tuls_pdf2docx.py'), 'utf8'))
   python.globals.get('configure')(
     readFileSync(join(here, 'officeFonts.json'), 'utf8'),
   )
@@ -98,7 +38,7 @@ function convert() {
 }
 
 beforeAll(async () => {
-  python = await loadPython()
+  python = await loadPdf2docx()
 }, 60_000)
 
 describe('font names, as Word knows them', () => {

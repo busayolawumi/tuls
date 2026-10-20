@@ -1,4 +1,5 @@
 import type { ToolManifest } from './types.ts'
+import { manifest as compressPdf } from './compress-pdf/manifest.ts'
 import { manifest as excelToPdf } from './excel-to-pdf/manifest.ts'
 import { manifest as imagesToPdf } from './images-to-pdf/manifest.ts'
 import { manifest as mergePdf } from './merge-pdf/manifest.ts'
@@ -25,6 +26,7 @@ export const tools: ToolManifest[] = [
   pdfToImages,
   protectPdf,
   unlockPdf,
+  compressPdf,
   wordToPdf,
   pdfToWord,
   excelToPdf,

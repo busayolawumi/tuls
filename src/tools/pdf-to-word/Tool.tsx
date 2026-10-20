@@ -76,7 +76,7 @@ function stepLabel({ step, name, index, total }: Working) {
   if (step.step === 'download') return 'Downloading the converter…'
   if (step.step === 'start') return 'Starting the converter…'
   const which = total > 1 ? `${index + 1} of ${total}: ${name}` : name
-  const progress = step.progress
+  const progress = step.step === 'convert' ? step.progress : undefined
   if (!progress) return `Converting ${which}…`
   const verb = progress.phase === 'reading' ? 'reading' : 'writing'
   return `Converting ${which}, ${verb} page ${progress.page} of ${progress.pages}…`
