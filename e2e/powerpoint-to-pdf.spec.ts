@@ -34,7 +34,7 @@ test('the tool has its own title and link preview', async ({ request }) => {
   const html = await (await request.get('/powerpoint-to-pdf')).text()
   expect(html).toContain('<title>PowerPoint to PDF · Tuls</title>')
   expect(html).toContain(
-    '<meta property="og:url" content="https://tuls.busayolawumi.dev/powerpoint-to-pdf" />',
+    '<meta property="og:url" content="https://tuls.bsyo.dev/powerpoint-to-pdf" />',
   )
 })
 

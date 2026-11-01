@@ -97,7 +97,7 @@ test('the tool has its own title and link preview', async ({ request }) => {
   const html = await (await request.get('/video-to-gif')).text()
   expect(html).toContain('<title>Video to GIF · Tuls</title>')
   expect(html).toContain(
-    '<meta property="og:url" content="https://tuls.busayolawumi.dev/video-to-gif" />',
+    '<meta property="og:url" content="https://tuls.bsyo.dev/video-to-gif" />',
   )
 })
 

@@ -163,7 +163,7 @@ test('the tool has its own title and link preview', async ({ request }) => {
   const html = await (await request.get('/pdf-to-excel')).text()
   expect(html).toContain('<title>PDF to Excel · Tuls</title>')
   expect(html).toContain(
-    '<meta property="og:url" content="https://tuls.busayolawumi.dev/pdf-to-excel" />',
+    '<meta property="og:url" content="https://tuls.bsyo.dev/pdf-to-excel" />',
   )
 })
 

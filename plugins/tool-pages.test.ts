@@ -39,13 +39,13 @@ describe('headTags', () => {
     })
     expect(tags).toContain('<title>Video to GIF · Tuls</title>')
     expect(tags).toContain(
-      '<link rel="canonical" href="https://tuls.busayolawumi.dev/video-to-gif" />',
+      '<link rel="canonical" href="https://tuls.bsyo.dev/video-to-gif" />',
     )
     expect(tags).toContain(
-      '<meta property="og:url" content="https://tuls.busayolawumi.dev/video-to-gif" />',
+      '<meta property="og:url" content="https://tuls.bsyo.dev/video-to-gif" />',
     )
     expect(tags).toContain(
-      '<meta property="og:image" content="https://tuls.busayolawumi.dev/og-image.png" />',
+      '<meta property="og:image" content="https://tuls.bsyo.dev/og-image.png" />',
     )
     expect(tags).toContain(
       '<meta name="twitter:card" content="summary_large_image" />',

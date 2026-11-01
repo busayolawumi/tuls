@@ -166,7 +166,7 @@ test('the tool has its own title and link preview', async ({ request }) => {
   const html = await (await request.get('/merge-pdf')).text()
   expect(html).toContain('<title>Merge PDFs · Tuls</title>')
   expect(html).toContain(
-    '<meta property="og:url" content="https://tuls.busayolawumi.dev/merge-pdf" />',
+    '<meta property="og:url" content="https://tuls.bsyo.dev/merge-pdf" />',
   )
 })
 

@@ -136,7 +136,7 @@ test('the tool has its own title and link preview', async ({ request }) => {
   const html = await (await request.get('/pdf-to-word')).text()
   expect(html).toContain('<title>PDF to Word · Tuls</title>')
   expect(html).toContain(
-    '<meta property="og:url" content="https://tuls.busayolawumi.dev/pdf-to-word" />',
+    '<meta property="og:url" content="https://tuls.bsyo.dev/pdf-to-word" />',
   )
 })
 

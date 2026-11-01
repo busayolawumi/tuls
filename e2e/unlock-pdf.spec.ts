@@ -220,7 +220,7 @@ test('the tool has its own title and link preview', async ({ request }) => {
   const html = await (await request.get('/unlock-pdf')).text()
   expect(html).toContain('<title>Unlock PDF · Tuls</title>')
   expect(html).toContain(
-    '<meta property="og:url" content="https://tuls.busayolawumi.dev/unlock-pdf" />',
+    '<meta property="og:url" content="https://tuls.bsyo.dev/unlock-pdf" />',
   )
 })
 
