@@ -3,7 +3,6 @@ import {
   checkImage,
   formatOf,
   imagesLabel,
-  isHeic,
   loadPageSize,
   MAX_IMAGE_SIZE,
   pdfName,
@@ -29,12 +28,6 @@ describe('checkImage', () => {
     expect(checkImage(file('huge.jpg', 'image/jpeg', MAX_IMAGE_SIZE + 1))).toBe(
       'That image is 50 MB. Each image can be up to 50 MB.',
     )
-  })
-
-  it('knows HEIC photos', () => {
-    expect(isHeic(file('IMG_1.heic', ''))).toBe(true)
-    expect(isHeic(file('x', 'image/heif'))).toBe(true)
-    expect(isHeic(file('IMG_1.jpg', 'image/jpeg'))).toBe(false)
   })
 })
 

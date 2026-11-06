@@ -42,11 +42,6 @@ export function checkImage(file: File): string | undefined {
   }
 }
 
-/** HEIC is what iPhones save photos as. Only Safari can open it so far. */
-export function isHeic(file: File) {
-  return /^image\/hei[cf]$/.test(file.type) || /\.hei[cf]$/i.test(file.name)
-}
-
 /** JPEG and PNG go into the PDF as they are; anything else is redrawn. */
 export function formatOf(start: Uint8Array): 'jpeg' | 'png' | undefined {
   if (start[0] === 0xff && start[1] === 0xd8 && start[2] === 0xff) {

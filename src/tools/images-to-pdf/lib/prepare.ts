@@ -1,13 +1,15 @@
 import type { PageImage } from '../../../engines/pdf/images'
+import { openPicture } from '../../../lib/picture'
 import { formatOf } from './images'
 
 // Images as the browser sees them: thumbnails, and the kinds the PDF can't
 // take as they are (WebP, GIF, HEIC and others), redrawn as JPEG or PNG.
-// Both use the browser's own decoders, so what opens depends on the browser.
+// The browser opens what it can, and HEIC photos it can't go to libheif
+// (lib/picture.ts).
 
-/** Decodes an image, turned upright as its EXIF says. */
-function decode(file: Blob) {
-  return createImageBitmap(file, { imageOrientation: 'from-image' })
+/** Decodes an image, turned upright as its details say. */
+async function decode(file: Blob) {
+  return (await openPicture(file)).bitmap
 }
 
 /**

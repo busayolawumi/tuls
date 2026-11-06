@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { PDFDocument } from '@cantoo/pdf-lib'
 import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
@@ -177,12 +178,28 @@ test('see-through WebP images are redrawn and kept see-through', async ({
   expect(text).toContain('/SMask')
 })
 
+test('takes iPhone photos (HEIC) in any browser, upright', async ({ page }) => {
+  // 64 × 48, marked to be turned a quarter (fixtures/README.md). Browsers
+  // other than Safari open it with libheif.
+  const heic = readFileSync(
+    new URL('./fixtures/turned-p3.heic', import.meta.url),
+  )
+  const grid = await choose(page, [
+    image('IMG_0001.HEIC', 'image/heic', new Uint8Array(heic)),
+  ])
+  await expect(grid.locator('img')).toHaveCount(1, { timeout: 30_000 })
+  await page.getByRole('button', { name: 'Make PDF' }).click()
+  const { text, doc } = await madePdf(page)
+  expect(sizes(doc)).toEqual([[36, 48]])
+  expect(text).not.toContain('TulsTestCam')
+})
+
 test('images that can’t be opened are named, and have to go first', async ({
   page,
 }) => {
   await choose(page, [
     image('photo.jpg', 'image/jpeg', TINY_JPEG),
-    // Not a real HEIC, and Chrome can't open real ones either.
+    // Named like a HEIC, but not one.
     image('IMG_0001.heic', 'image/heic', new Uint8Array(64).fill(7)),
     { name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('hi') },
   ])
@@ -193,9 +210,7 @@ test('images that can’t be opened are named, and have to go first', async ({
   ).toBeVisible()
   await expect(page.getByText('Can’t open this image')).toBeVisible()
   await expect(
-    page.getByText(
-      'This browser can’t open HEIC photos. Remove them, or try Safari.',
-    ),
+    page.getByText('Remove the images that can’t be opened to make the PDF.'),
   ).toBeVisible()
   const make = page.getByRole('button', { name: 'Make PDF' })
   await expect(make).toBeDisabled()

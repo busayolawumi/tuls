@@ -1,7 +1,7 @@
 import type { Plugin } from 'vite'
 
-// qpdf.js (Emscripten's output) requires Node's fs, path and crypto, in code
-// it only runs under Node: the unit tests. In the browser they're never
+// qpdf.js and libheif.js (Emscripten's output) require Node's fs, path and
+// crypto, in code they only run under Node. In the browser they're never
 // used, so they become empty modules here, instead of Vite warning on every
 // build that it left them out.
 
@@ -15,7 +15,8 @@ export function qpdf(): Plugin {
     resolveId(id, importer) {
       if (
         NODE_ONLY.has(id) &&
-        importer?.includes('/@neslinesli93/qpdf-wasm/')
+        (importer?.includes('/@neslinesli93/qpdf-wasm/') ||
+          importer?.includes('/libheif-js/'))
       ) {
         return STUB
       }

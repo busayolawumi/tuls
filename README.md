@@ -7,6 +7,7 @@ Work in progress.
 ## Tools
 
 - **Video to GIF**: trim, crop and turn a video into a GIF. It started as [Gify](https://github.com/busayolawumi/gify).
+- **Convert images**: turn iPhone photos (HEIC) into JPG, or convert between JPG, PNG and WebP (AVIF, GIF and BMP go in too). Photos come out upright, without location, camera or other details, and keep their colours: iPhones' wider Display P3 colours stay, with their profile, where the browser can save them. Safari opens HEIC itself; other browsers use [libheif](https://github.com/strukturag/libheif) compiled to WebAssembly (about 490 KB, fetched only when needed), which Images to PDF uses too. Safari can't save WebP, so a small WebP encoder from jSquash does it there.
 - **Merge PDFs**: combine several PDFs into one, in the order you choose.
 - **Organise PDF**: reorder, rotate and delete the pages of a PDF.
 - **Split PDF**: split a PDF into several smaller ones, at the pages you choose.

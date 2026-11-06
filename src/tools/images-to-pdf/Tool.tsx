@@ -17,7 +17,6 @@ import {
   MAX_IMAGE_SIZE,
   checkImage,
   imagesLabel,
-  isHeic,
   loadPageSize,
   pdfName,
   savePageSize,
@@ -202,9 +201,7 @@ function ImagesToPdf() {
 
   const first = items[0]
   const status = problems.length
-    ? problems.some((item) => isHeic(item.file))
-      ? 'This browser can’t open HEIC photos. Remove them, or try Safari.'
-      : 'Remove the images that can’t be opened to make the PDF.'
+    ? 'Remove the images that can’t be opened to make the PDF.'
     : opening
       ? 'Opening images…'
       : imagesLabel(items.length)
