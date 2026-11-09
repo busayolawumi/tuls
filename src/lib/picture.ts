@@ -1,4 +1,5 @@
 import { decodeHeif } from '../engines/heif/client'
+import { resizePixels } from '../engines/images/client'
 import { canvasCanKeepP3, isDisplayP3, p3ToSrgb } from './colour'
 import { cleanJpeg } from './jpeg'
 
@@ -85,6 +86,79 @@ export function fitPixels(width: number, height: number, maxPixels: number) {
     width: Math.max(1, Math.floor(width * scale)),
     height: Math.max(1, Math.floor(height * scale)),
   }
+}
+
+/** Halving as far as it goes, then the rest: no canvas is bigger than needed. */
+async function halved(picture: Picture, width: number, height: number) {
+  let source: ImageBitmap | HTMLCanvasElement = picture.bitmap
+  let size = { width: picture.width, height: picture.height }
+  const shrinkTo = (to: { width: number; height: number }) => {
+    const { canvas, context } = canvasOf(to.width, to.height, picture.p3)
+    if (!context) throw new PictureError('Couldn’t resize the image')
+    context.imageSmoothingQuality = 'high'
+    context.drawImage(source, 0, 0, to.width, to.height)
+    source = canvas
+    size = to
+  }
+  while (size.width / 2 >= width && size.height / 2 >= height) {
+    shrinkTo({
+      width: Math.ceil(size.width / 2),
+      height: Math.ceil(size.height / 2),
+    })
+  }
+  if (size.width !== width || size.height !== height) {
+    shrinkTo({ width, height })
+  }
+  return createImageBitmap(source)
+}
+
+async function lanczos(picture: Picture, width: number, height: number) {
+  const { canvas, context } = canvasOf(
+    picture.width,
+    picture.height,
+    picture.p3,
+  )
+  if (!context) throw new PictureError('Couldn’t resize the image')
+  context.drawImage(picture.bitmap, 0, 0)
+  const from = context.getImageData(0, 0, canvas.width, canvas.height)
+  canvas.width = canvas.height = 0
+  const pixels = await resizePixels(
+    from.data.buffer as ArrayBuffer,
+    picture.width,
+    picture.height,
+    width,
+    height,
+  )
+  return createImageBitmap(
+    new ImageData(
+      pixels,
+      width,
+      height,
+      picture.p3 ? { colorSpace: 'display-p3' } : undefined,
+    ),
+  )
+}
+
+/**
+ * A smaller copy of a picture. Lanczos looks the same in every browser, but
+ * needs the whole picture's pixels, and iPhones can't give them above about
+ * 16.7 megapixels: there, or if it fails, the browser shrinks it in halves.
+ */
+export async function shrinkPicture(
+  picture: Picture,
+  width: number,
+  height: number,
+): Promise<Picture> {
+  const tooBig =
+    picture.width * picture.height > PHONE_PIXELS &&
+    globalThis.matchMedia?.('(pointer: coarse)').matches
+  const bitmap = tooBig
+    ? await halved(picture, width, height)
+    : await lanczos(picture, width, height).catch((e: unknown) => {
+        console.warn(e)
+        return halved(picture, width, height)
+      })
+  return { width, height, p3: picture.p3, bitmap }
 }
 
 async function draw(

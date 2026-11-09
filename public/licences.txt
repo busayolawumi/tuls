@@ -147,11 +147,16 @@ wasm-feature-detect 1.9.0 (Apache License 2.0) by Google. Inside it is
 libwebp (https://chromium.googlesource.com/webm/libwebp), Copyright (c) 2010,
 Google Inc., under the BSD 3-Clause License.
 
+Resize images shrinks pictures with jSquash's resize package (@jsquash/resize
+2.1.1, https://github.com/jamsinclair/jSquash), under the Apache License 2.0.
+Inside it is the resize crate (https://github.com/PistonDevelopers/resize),
+Copyright (c) 2015 PistonDevelopers, under the MIT License.
+
 The Geist and Geist Mono fonts are by Vercel, licensed under the SIL Open Font
 License 1.1: https://github.com/vercel/geist-font
 
 The full licence texts follow: the GNU General Public License, version 2
-(FFmpeg), the MIT License (pdf-lib, dnd-kit and fflate), the Apache
+(FFmpeg), the MIT License (pdf-lib, dnd-kit, fflate and resize), the Apache
 License 2.0 (pdf.js, OpenCV, qpdf and jSquash), the Mozilla Public License 2.0
 (LibreOffice and Pyodide), the SIL Open Font License 1.1 (Geist, the Google
 fonts and most of the engine's fonts), the Ubuntu Font Licence 1.0 (Ubuntu),

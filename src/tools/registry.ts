@@ -10,6 +10,7 @@ import { manifest as pdfToImages } from './pdf-to-images/manifest.ts'
 import { manifest as pdfToWord } from './pdf-to-word/manifest.ts'
 import { manifest as powerpointToPdf } from './powerpoint-to-pdf/manifest.ts'
 import { manifest as protectPdf } from './protect-pdf/manifest.ts'
+import { manifest as resizeImages } from './resize-images/manifest.ts'
 import { manifest as splitPdf } from './split-pdf/manifest.ts'
 import { manifest as unlockPdf } from './unlock-pdf/manifest.ts'
 import { manifest as videoToGif } from './video-to-gif/manifest.ts'
@@ -22,6 +23,7 @@ import { manifest as wordToPdf } from './word-to-pdf/manifest.ts'
 export const tools: ToolManifest[] = [
   videoToGif,
   convertImages,
+  resizeImages,
   mergePdf,
   organisePdf,
   splitPdf,

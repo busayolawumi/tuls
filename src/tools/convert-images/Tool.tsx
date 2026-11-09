@@ -3,6 +3,7 @@ import { FailedList, type Failed } from '../../components/FailedList'
 import { FileDrop } from '../../components/FileDrop'
 import { FileResult } from '../../components/FileResult'
 import { FilesResult } from '../../components/FilesResult'
+import { ImageList } from '../../components/images/ImageList'
 import { ProgressPanel } from '../../components/ProgressPanel'
 import { stopHeif } from '../../engines/heif/client'
 import { formatSize } from '../../lib/format'
@@ -250,36 +251,7 @@ function ConvertImages() {
 
       {screen === 'choose' && files && (
         <div className="mt-6 w-full max-w-xl text-left sm:mt-8">
-          <ul
-            aria-label="The images"
-            className="divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800"
-          >
-            {files.slice(0, 6).map((file, i) => (
-              // Two images can share a name.
-              <li
-                key={i}
-                className="flex items-baseline justify-between gap-3 px-3 py-2 text-sm"
-              >
-                <span className="truncate" title={file.name}>
-                  {file.name}
-                </span>
-                <span className="shrink-0 font-mono text-xs text-zinc-500 dark:text-zinc-400">
-                  {formatSize(file.size)}
-                </span>
-              </li>
-            ))}
-            {files.length > 6 && (
-              <li className="px-3 py-2 text-sm text-zinc-500 dark:text-zinc-400">
-                and {files.length - 6} more
-              </li>
-            )}
-          </ul>
-          {leftOut > 0 && (
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Up to {MAX_IMAGES} images can go in at once, so {leftOut}{' '}
-              {leftOut === 1 ? 'was' : 'were'} left out.
-            </p>
-          )}
+          <ImageList files={files} leftOut={leftOut} />
 
           <fieldset className="mt-6">
             <legend className="text-sm font-medium">Convert to</legend>

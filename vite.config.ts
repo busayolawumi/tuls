@@ -45,6 +45,7 @@ export default defineConfig({
       '@ffmpeg/util',
       '@bentopdf/pymupdf-wasm',
       '@jsquash/webp',
+      '@jsquash/resize',
     ],
     include: ['@neslinesli93/qpdf-wasm', 'libheif-js/libheif-wasm/libheif.js'],
   },
