@@ -21,6 +21,8 @@ export type ToolManifest = {
    * words ("combine"), and the conversions they'd type ("jpg to pdf").
    */
   keywords: string[]
+  /** It takes one file at a time. */
+  single?: true
   /**
    * The page must be cross-origin isolated, for engines that need
    * SharedArrayBuffer (LibreOffice). vercel.json must give its address the

@@ -6,6 +6,7 @@ export const manifest: ToolManifest = {
   description:
     'Turn the pages of a PDF into JPG or PNG images. Your files never leave your device.',
   category: 'PDF',
+  single: true,
   accepts: ['pdf'],
   keywords: ['pdf to jpg', 'pdf to png', 'picture', 'photo', 'extract'],
 }

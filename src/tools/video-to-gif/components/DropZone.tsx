@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { formatSize } from '../../../lib/format'
+import { useHandedFiles } from '../../../lib/useHandedFiles'
 import { ACCEPT, MAX_FILE_SIZE, checkVideo } from '../lib/video'
 
 type Props = {
@@ -12,7 +13,7 @@ export function DropZone({ onFile }: Props) {
   const [error, setError] = useState<string>()
 
   const choose = useCallback(
-    (files: FileList | null | undefined) => {
+    (files: FileList | File[] | null | undefined) => {
       const file = files?.[0]
       if (!file) return
       const problem = checkVideo(file)
@@ -21,6 +22,7 @@ export function DropZone({ onFile }: Props) {
     },
     [onFile],
   )
+  useHandedFiles(choose)
 
   // The whole page takes drops, so a near miss doesn't make the browser
   // leave Tuls to open the video itself.

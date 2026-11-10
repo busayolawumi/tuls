@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { MouseEvent, ReactNode } from 'react'
 import { Link } from 'react-router'
 import type { ToolManifest } from '../tools/types'
 
@@ -12,16 +12,19 @@ export function ToolLink({
   tool,
   className,
   children,
+  onClick,
 }: {
   tool: ToolManifest
   className?: string
   children: ReactNode
+  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void
 }) {
   return (
     <Link
       to={`/${tool.id}`}
       reloadDocument={tool.isolated && !self.crossOriginIsolated}
       className={className}
+      onClick={onClick}
     >
       {children}
     </Link>
