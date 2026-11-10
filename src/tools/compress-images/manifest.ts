@@ -7,4 +7,15 @@ export const manifest: ToolManifest = {
     'Make JPG, PNG, WebP and HEIC images smaller in file size, keeping how they look, right in your browser. Your files never leave your device.',
   category: 'Images',
   accepts: ['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'avif', 'gif', 'bmp'],
+  keywords: [
+    'compress',
+    'shrink',
+    'reduce',
+    'smaller',
+    'optimise',
+    'optimize',
+    'file size',
+    'photo',
+    'picture',
+  ],
 }

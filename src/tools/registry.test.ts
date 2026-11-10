@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { tools } from './registry'
+import { categories, tools } from './registry'
 
 // Addresses the site already uses, which a tool's id mustn't take.
 const TAKEN = ['index', '404', 'assets', 'licences', 'engines']
@@ -40,6 +40,23 @@ describe('the tool registry', () => {
     for (const tool of tools) {
       for (const extension of tool.accepts) {
         expect(extension).toMatch(/^[a-z0-9]+$/)
+      }
+    }
+  })
+
+  it('puts every tool in a home page group, and leaves no group empty', () => {
+    for (const tool of tools) expect(categories).toContain(tool.category)
+    for (const category of categories) {
+      expect(tools.some((tool) => tool.category === category)).toBe(true)
+    }
+  })
+
+  it('gives every tool lowercase search words, none repeated', () => {
+    for (const tool of tools) {
+      expect(tool.keywords.length, tool.id).toBeGreaterThan(0)
+      expect(new Set(tool.keywords).size, tool.id).toBe(tool.keywords.length)
+      for (const keyword of tool.keywords) {
+        expect(keyword).toMatch(/^[a-z0-9]+( [a-z0-9]+)*$/)
       }
     }
   })

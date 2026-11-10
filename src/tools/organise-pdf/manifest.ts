@@ -7,4 +7,14 @@ export const manifest: ToolManifest = {
     'Reorder, rotate and delete the pages of a PDF. Your files never leave your device.',
   category: 'PDF',
   accepts: ['pdf'],
+  keywords: [
+    'organize',
+    'reorder',
+    'rearrange',
+    'rotate',
+    'turn',
+    'delete pages',
+    'remove pages',
+    'sort pages',
+  ],
 }

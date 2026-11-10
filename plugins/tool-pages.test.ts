@@ -21,6 +21,7 @@ describe('toolPage', () => {
       description: 'Makes GIFs.',
       category: 'Video',
       accepts: ['mp4'],
+      keywords: [],
     })
     expect(page).toEqual({
       path: '/video-to-gif',

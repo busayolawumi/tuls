@@ -7,4 +7,5 @@ export const manifest: ToolManifest = {
     'Take the password off PDFs, or change it, right in your browser. Your files never leave your device.',
   category: 'PDF',
   accepts: ['pdf'],
+  keywords: ['unlock', 'decrypt', 'remove password', 'change password'],
 }

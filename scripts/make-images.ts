@@ -85,8 +85,8 @@ async function ogImageHtml() {
     .brand { display: flex; align-items: center; gap: 16px; font-size: 48px; font-weight: 450; letter-spacing: -0.03em; }
     .brand svg { width: 52px; height: 52px; }
     .dot { color: ${ORANGE}; }
-    h1 { margin: 96px 0 0; font-size: 96px; font-weight: 450; letter-spacing: -0.035em; line-height: 1; }
-    p { margin: 26px 0 0; font-size: 34px; color: ${MUTED}; letter-spacing: -0.01em; }
+    h1 { margin: 88px 0 0; font-size: 88px; font-weight: 450; letter-spacing: -0.035em; line-height: 1; }
+    p { margin: 26px 0 0; font-size: 32px; line-height: 1.3; color: ${MUTED}; letter-spacing: -0.01em; text-wrap: pretty; }
     .address { margin-top: auto; align-self: flex-start; font-size: 30px; padding: 16px 28px; border-radius: 14px; border: 1.5px solid #27272a; background: #18181b; }
   </style></head><body><div class="card">
     <div class="brand"><svg viewBox="0 0 32 32">${toolbox(INK_DARK)}</svg><span>Tuls<span class="dot">.</span></span></div>

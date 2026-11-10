@@ -1,6 +1,6 @@
 # Tuls
 
-Everyday file tools that run in your browser. Your files never leave your device.
+PDF, document, image and video tools that run in your browser. Your files never leave your device.
 
 Work in progress.
 

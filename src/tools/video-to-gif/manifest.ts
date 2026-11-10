@@ -7,4 +7,14 @@ export const manifest: ToolManifest = {
     'Pick the best part of any video and make it loop. Your video never leaves your device.',
   category: 'Video',
   accepts: ['mp4', 'm4v', 'mov', 'webm'],
+  keywords: [
+    'gif',
+    'animated',
+    'animation',
+    'clip',
+    'loop',
+    'meme',
+    'screen recording',
+    'video',
+  ],
 }

@@ -7,5 +7,6 @@ export const manifest: ToolManifest = {
     'Turn Word documents into PDFs, with LibreOffice running in your browser. Your files never leave your device.',
   category: 'Documents',
   accepts: ['docx', 'doc', 'odt', 'rtf'],
+  keywords: ['convert', 'docx to pdf', 'doc to pdf'],
   isolated: true,
 }

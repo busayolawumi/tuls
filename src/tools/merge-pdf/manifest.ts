@@ -7,4 +7,5 @@ export const manifest: ToolManifest = {
     'Combine several PDFs into one, in the order you choose. Your files never leave your device.',
   category: 'PDF',
   accepts: ['pdf'],
+  keywords: ['merge', 'combine', 'join', 'append', 'put together'],
 }

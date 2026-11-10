@@ -7,5 +7,6 @@ export const manifest: ToolManifest = {
     'Turn PowerPoint presentations into PDFs, with LibreOffice running in your browser. Your files never leave your device.',
   category: 'Documents',
   accepts: ['pptx', 'ppsx', 'ppt', 'odp'],
+  keywords: ['convert', 'pptx to pdf', 'slides', 'presentation', 'deck'],
   isolated: true,
 }

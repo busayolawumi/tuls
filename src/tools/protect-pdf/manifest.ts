@@ -7,4 +7,5 @@ export const manifest: ToolManifest = {
     'Add a password to PDFs, right in your browser. Your files never leave your device.',
   category: 'PDF',
   accepts: ['pdf'],
+  keywords: ['password', 'encrypt', 'lock', 'secure'],
 }

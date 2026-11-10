@@ -7,5 +7,6 @@ export const manifest: ToolManifest = {
     'Turn Excel spreadsheets and CSV files into PDFs, with LibreOffice running in your browser. Your files never leave your device.',
   category: 'Documents',
   accepts: ['xlsx', 'xlsm', 'xls', 'ods', 'csv', 'tsv'],
+  keywords: ['convert', 'xlsx to pdf', 'csv to pdf', 'spreadsheet', 'sheet'],
   isolated: true,
 }

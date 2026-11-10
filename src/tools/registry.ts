@@ -1,4 +1,4 @@
-import type { ToolManifest } from './types.ts'
+import type { ToolCategory, ToolManifest } from './types.ts'
 import { manifest as compressPdf } from './compress-pdf/manifest.ts'
 import { manifest as compressImages } from './compress-images/manifest.ts'
 import { manifest as convertImages } from './convert-images/manifest.ts'
@@ -17,15 +17,20 @@ import { manifest as unlockPdf } from './unlock-pdf/manifest.ts'
 import { manifest as videoToGif } from './video-to-gif/manifest.ts'
 import { manifest as wordToPdf } from './word-to-pdf/manifest.ts'
 
+/** The home page's groups, in order. */
+export const categories: ToolCategory[] = [
+  'PDF',
+  'Documents',
+  'Images',
+  'Video',
+]
+
 /**
- * Every tool, in the order the home page lists them. To add one, give it a
- * folder with a manifest.ts and a Tool.tsx, and list its manifest here.
+ * Every tool, in the order the home page lists them within their group. To
+ * add one, give it a folder with a manifest.ts and a Tool.tsx, and list its
+ * manifest here.
  */
 export const tools: ToolManifest[] = [
-  videoToGif,
-  convertImages,
-  resizeImages,
-  compressImages,
   mergePdf,
   organisePdf,
   splitPdf,
@@ -35,8 +40,12 @@ export const tools: ToolManifest[] = [
   unlockPdf,
   compressPdf,
   wordToPdf,
-  pdfToWord,
-  pdfToExcel,
   excelToPdf,
   powerpointToPdf,
+  pdfToWord,
+  pdfToExcel,
+  convertImages,
+  resizeImages,
+  compressImages,
+  videoToGif,
 ]

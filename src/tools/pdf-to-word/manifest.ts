@@ -7,4 +7,5 @@ export const manifest: ToolManifest = {
     'Turn PDFs into Word documents you can edit, right in your browser. Your files never leave your device.',
   category: 'Documents',
   accepts: ['pdf'],
+  keywords: ['convert', 'pdf to docx', 'edit pdf', 'editable'],
 }

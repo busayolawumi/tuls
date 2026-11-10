@@ -17,7 +17,7 @@ test('the home page loads', async ({ page }) => {
   await page.goto('/')
   await expect(page).toHaveTitle('Tuls')
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-    'Everyday file tools.',
+    'Fix any file. Upload nothing.',
   )
   expect(errors).toEqual([])
 })

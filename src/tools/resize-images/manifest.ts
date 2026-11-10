@@ -7,4 +7,15 @@ export const manifest: ToolManifest = {
     'Make images smaller in width and height, by a percentage or to a size you choose, right in your browser. Your files never leave your device.',
   category: 'Images',
   accepts: ['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'avif', 'gif', 'bmp'],
+  keywords: [
+    'resize',
+    'scale',
+    'dimensions',
+    'pixels',
+    'width',
+    'height',
+    'smaller',
+    'photo',
+    'picture',
+  ],
 }

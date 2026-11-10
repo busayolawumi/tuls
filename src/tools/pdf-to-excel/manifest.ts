@@ -7,4 +7,11 @@ export const manifest: ToolManifest = {
     'Turn the tables in PDFs into Excel spreadsheets, right in your browser. Your files never leave your device.',
   category: 'Documents',
   accepts: ['pdf'],
+  keywords: [
+    'convert',
+    'pdf to xlsx',
+    'spreadsheet',
+    'tables',
+    'bank statement',
+  ],
 }

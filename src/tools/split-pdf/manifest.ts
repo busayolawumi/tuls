@@ -7,4 +7,5 @@ export const manifest: ToolManifest = {
     'Split a PDF into several smaller ones, at the pages you choose. Your files never leave your device.',
   category: 'PDF',
   accepts: ['pdf'],
+  keywords: ['split', 'separate', 'extract pages', 'divide', 'cut'],
 }
