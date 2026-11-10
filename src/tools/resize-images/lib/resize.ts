@@ -60,9 +60,16 @@ export function formatFor(file: Pick<File, 'name' | 'type'>): ImageFormat {
 }
 
 /** IMG_1.HEIC → IMG_1-resized.jpg, numbered if two match. */
-export function resizedNames(files: Pick<File, 'name' | 'type'>[]) {
+export const resizedNames = (files: Pick<File, 'name' | 'type'>[]) =>
+  suffixedNames(files, 'resized')
+
+/** Each new image's name: its original's, a suffix and its new format. */
+export function suffixedNames(
+  files: Pick<File, 'name' | 'type'>[],
+  suffix: string,
+) {
   const named = outputNames(
-    files.map((file) => `${documentBase(file.name)}-resized.x`),
+    files.map((file) => `${documentBase(file.name)}-${suffix}.x`),
     'x',
   )
   return named.map((name, i) =>

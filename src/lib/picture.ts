@@ -1,7 +1,7 @@
 import { decodeHeif } from '../engines/heif/client'
 import { resizePixels } from '../engines/images/client'
 import { canvasCanKeepP3, isDisplayP3, p3ToSrgb } from './colour'
-import { cleanJpeg } from './jpeg'
+import { cleanJpeg, iccSegments } from './jpeg'
 
 export type Picture = {
   width: number
@@ -9,6 +9,8 @@ export type Picture = {
   /** Kept in Display P3 when saved, where the browser can. */
   p3: boolean
   bitmap: ImageBitmap
+  /** Whether the browser opened it itself, so it can show the file as it is. */
+  native?: boolean
 }
 
 export type ImageFormat = 'jpeg' | 'png' | 'webp'
@@ -48,7 +50,13 @@ export async function openPicture(file: Blob): Promise<Picture> {
     const bitmap = await createImageBitmap(file, {
       imageOrientation: 'from-image',
     })
-    return { width: bitmap.width, height: bitmap.height, p3, bitmap }
+    return {
+      width: bitmap.width,
+      height: bitmap.height,
+      p3,
+      bitmap,
+      native: true,
+    }
   } catch (e) {
     if (!isHeifData(bytes)) throw new PictureError('Can’t open', { cause: e })
   }
@@ -158,7 +166,63 @@ export async function shrinkPicture(
         console.warn(e)
         return halved(picture, width, height)
       })
-  return { width, height, p3: picture.p3, bitmap }
+  return { width, height, p3: picture.p3, bitmap, native: picture.native }
+}
+
+/**
+ * The picture's pixels, upright: in Display P3 when it has those colours and
+ * `wide` asks for them, else in sRGB. On white when `onWhite`, for formats
+ * without see-through parts.
+ */
+export function picturePixels(
+  picture: Picture,
+  wide: boolean,
+  onWhite: boolean,
+) {
+  const p3 = wide && picture.p3
+  const { canvas, context } = canvasOf(picture.width, picture.height, p3)
+  if (!context) throw new PictureError('Couldn’t read the image')
+  if (onWhite) {
+    context.fillStyle = '#fff'
+    context.fillRect(0, 0, picture.width, picture.height)
+  }
+  context.drawImage(picture.bitmap, 0, 0)
+  const data = context.getImageData(0, 0, picture.width, picture.height).data
+  canvas.width = canvas.height = 0
+  return { data, width: picture.width, height: picture.height, p3 }
+}
+
+let p3Segments: Promise<Uint8Array | undefined> | undefined
+
+/** The Display P3 colour profile, as JPEG segments, from the browser's own JPEG. */
+export function p3Profile() {
+  p3Segments ??= (async () => {
+    const { canvas, context } = canvasOf(1, 1, true)
+    if (!context) return undefined
+    context.fillRect(0, 0, 1, 1)
+    const blob = await toBlob(canvas, TYPES.jpeg, 0.9)
+    return blob
+      ? iccSegments(new Uint8Array(await blob.arrayBuffer()))
+      : undefined
+  })().catch(() => undefined)
+  return p3Segments
+}
+
+/**
+ * An address to show the picture as it was: the file itself where the
+ * browser can show it, else a PNG of it at most `side` pixels across.
+ */
+export async function beforeUrl(file: Blob, picture: Picture, side: number) {
+  if (picture.native) return URL.createObjectURL(file)
+  const scale = Math.min(1, side / Math.max(picture.width, picture.height))
+  const width = Math.max(1, Math.round(picture.width * scale))
+  const height = Math.max(1, Math.round(picture.height * scale))
+  const { canvas, context } = canvasOf(width, height, picture.p3)
+  if (!context) return undefined
+  context.imageSmoothingQuality = 'high'
+  context.drawImage(picture.bitmap, 0, 0, width, height)
+  const blob = await toBlob(canvas, TYPES.png)
+  return blob ? URL.createObjectURL(blob) : undefined
 }
 
 async function draw(

@@ -1,5 +1,6 @@
 import type { ToolManifest } from './types.ts'
 import { manifest as compressPdf } from './compress-pdf/manifest.ts'
+import { manifest as compressImages } from './compress-images/manifest.ts'
 import { manifest as convertImages } from './convert-images/manifest.ts'
 import { manifest as excelToPdf } from './excel-to-pdf/manifest.ts'
 import { manifest as imagesToPdf } from './images-to-pdf/manifest.ts'
@@ -24,6 +25,7 @@ export const tools: ToolManifest[] = [
   videoToGif,
   convertImages,
   resizeImages,
+  compressImages,
   mergePdf,
   organisePdf,
   splitPdf,

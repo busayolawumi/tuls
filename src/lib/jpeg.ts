@@ -95,3 +95,44 @@ function exifOrientation(data: Uint8Array): number | undefined {
   }
   return undefined
 }
+
+/** A JPEG's colour profile segments (APP2, ICC_PROFILE), joined, if it has any. */
+export function iccSegments(bytes: Uint8Array): Uint8Array | undefined {
+  if (bytes[0] !== 0xff || bytes[1] !== SOI) return undefined
+  const found: Uint8Array[] = []
+  let at = 2
+  while (at + 4 <= bytes.length && bytes[at] === 0xff) {
+    const marker = bytes[at + 1]
+    if (marker === SOS || marker === EOI) break
+    const end = at + 2 + ((bytes[at + 2] << 8) | bytes[at + 3])
+    if (end > bytes.length) return undefined
+    const name = String.fromCharCode(...bytes.subarray(at + 4, at + 15))
+    if (marker === APP2 && name === 'ICC_PROFILE') {
+      found.push(bytes.subarray(at, end))
+    }
+    at = end
+  }
+  if (!found.length) return undefined
+  const joined = new Uint8Array(
+    found.reduce((sum, part) => sum + part.length, 0),
+  )
+  let offset = 0
+  for (const part of found) {
+    joined.set(part, offset)
+    offset += part.length
+  }
+  return joined
+}
+
+/** A JPEG with a colour profile put in after its start (and its JFIF, if any). */
+export function withProfile(jpeg: Uint8Array, segments: Uint8Array) {
+  let at = 2
+  if (jpeg[2] === 0xff && jpeg[3] === APP0) {
+    at += 2 + ((jpeg[4] << 8) | jpeg[5])
+  }
+  const out = new Uint8Array(jpeg.length + segments.length)
+  out.set(jpeg.subarray(0, at))
+  out.set(segments, at)
+  out.set(jpeg.subarray(at), at + segments.length)
+  return out
+}

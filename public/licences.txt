@@ -140,7 +140,8 @@ https://github.com/strukturag/libheif, https://github.com/strukturag/libde265
 and https://github.com/catdad-experiments/libheif-js. HEVC is covered by
 patents; Tuls uses this decoder only to read photos on the visitor's own device.
 
-Convert images saves WebP in Safari with jSquash's WebP encoder
+Convert images saves WebP in Safari, and Compress images saves every WebP,
+with jSquash's WebP encoder
 (@jsquash/webp 1.5.0, https://github.com/jamsinclair/jSquash) by Jamie
 Sinclair, from Google's Squoosh, licensed under the Apache License 2.0, with
 wasm-feature-detect 1.9.0 (Apache License 2.0) by Google. Inside it is
@@ -152,19 +153,40 @@ Resize images shrinks pictures with jSquash's resize package (@jsquash/resize
 Inside it is the resize crate (https://github.com/PistonDevelopers/resize),
 Copyright (c) 2015 PistonDevelopers, under the MIT License.
 
+Compress images uses three more encoders, each fetched only when needed:
+
+- jSquash's JPEG encoder (@jsquash/jpeg 1.6.0, Apache License 2.0), with
+  MozJPEG 3.3.1 (https://github.com/mozilla/mozjpeg), which builds on
+  libjpeg-turbo: under the IJG License, the BSD 3-Clause License and the
+  zlib License. This software is based in part on the work of the
+  Independent JPEG Group.
+- jSquash's PNG optimiser (@jsquash/oxipng 2.3.0, Apache License 2.0), with
+  oxipng 9.1.1 (https://github.com/shssoichiro/oxipng), Copyright (c) 2016
+  Joshua Holmer, under the MIT License, and libdeflate
+  (https://github.com/ebiggers/libdeflate) through the libdeflater crate,
+  both under the MIT License.
+- libimagequant 4.4.1 (https://pngquant.org/lib/), by Kornel Lesiński and
+  contributors, which reduces PNGs to 256 colours, under the GNU General
+  Public License, version 3 or later (its text is below, with pdf2docx's).
+  It comes compiled to WebAssembly by libimagequant-wasm 0.5.0
+  (https://github.com/akshetpandey/libimagequant-wasm), Copyright (c) 2024
+  libimagequant-wasm contributors, under the MIT License. Source code:
+  https://github.com/ImageOptim/libimagequant and the wrapper's repository.
+
 The Geist and Geist Mono fonts are by Vercel, licensed under the SIL Open Font
 License 1.1: https://github.com/vercel/geist-font
 
 The full licence texts follow: the GNU General Public License, version 2
-(FFmpeg), the MIT License (pdf-lib, dnd-kit, fflate and resize), the Apache
-License 2.0 (pdf.js, OpenCV, qpdf and jSquash), the Mozilla Public License 2.0
-(LibreOffice and Pyodide), the SIL Open Font License 1.1 (Geist, the Google
-fonts and most of the engine's fonts), the Ubuntu Font Licence 1.0 (Ubuntu),
-the GNU General Public License, version 3 (pdf2docx), the ISC License
-(qpdf-wasm), the zlib License (zlib and libjpeg-turbo), the BSD 3-Clause
-License (libjpeg-turbo and libwebp) and the GNU Lesser General Public License,
-version 3 (libheif, libde265 and libheif-js), which builds on the GPL version 3
-above.
+(FFmpeg), the MIT License (pdf-lib, dnd-kit, fflate, resize, oxipng,
+libdeflate and libimagequant-wasm), the Apache License 2.0 (pdf.js, OpenCV,
+qpdf and jSquash), the Mozilla Public License 2.0 (LibreOffice and Pyodide),
+the SIL Open Font License 1.1 (Geist, the Google fonts and most of the
+engine's fonts), the Ubuntu Font Licence 1.0 (Ubuntu), the GNU General Public
+License, version 3 (pdf2docx and libimagequant), the ISC License (qpdf-wasm),
+the zlib License (zlib, libjpeg-turbo and MozJPEG), the BSD 3-Clause License
+(libjpeg-turbo, MozJPEG and libwebp) and the GNU Lesser General Public
+License, version 3 (libheif, libde265 and libheif-js), which builds on the GPL
+version 3 above.
 
 ------------------------------------------------------------------------------
 

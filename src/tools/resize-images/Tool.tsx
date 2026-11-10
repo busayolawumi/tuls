@@ -4,6 +4,7 @@ import { FileDrop } from '../../components/FileDrop'
 import { FileResult } from '../../components/FileResult'
 import { FilesResult } from '../../components/FilesResult'
 import { ImageList } from '../../components/images/ImageList'
+import { NumberBox } from '../../components/images/NumberBox'
 import { ProgressPanel } from '../../components/ProgressPanel'
 import { Segmented } from '../../components/Segmented'
 import { stopHeif } from '../../engines/heif/client'
@@ -66,50 +67,6 @@ const textButton =
 const { markConverting, markDone, closedWhileConverting } = lastRun(
   'tuls:resize-images:resizing',
 )
-
-type BoxProps = {
-  label: string
-  unit: string
-  value: string
-  onChange: (value: string) => void
-  invalid: boolean
-  inputRef?: React.Ref<HTMLInputElement>
-}
-
-function NumberBox({
-  label,
-  unit,
-  value,
-  onChange,
-  invalid,
-  inputRef,
-}: BoxProps) {
-  return (
-    <label className="block text-sm font-medium">
-      {label}
-      <span className="mt-1 flex items-center gap-2">
-        <input
-          ref={inputRef}
-          type="text"
-          inputMode="numeric"
-          autoComplete="off"
-          maxLength={6}
-          value={value}
-          aria-invalid={invalid || undefined}
-          aria-describedby={invalid ? 'resize-problem' : undefined}
-          onChange={(event) => onChange(event.target.value.replace(/\D/g, ''))}
-          className="w-full min-w-0 rounded-lg border border-zinc-300 bg-transparent px-3 py-2 text-base font-normal sm:text-sm dark:border-zinc-700"
-        />
-        <span
-          aria-hidden="true"
-          className="font-normal text-zinc-500 dark:text-zinc-400"
-        >
-          {unit}
-        </span>
-      </span>
-    </label>
-  )
-}
 
 function ResizeImages() {
   useTitle(`${manifest.name} · Tuls`)
@@ -363,6 +320,7 @@ function ResizeImages() {
                 value={settings.percent}
                 onChange={(percent) => change({ percent })}
                 invalid={Boolean(problem)}
+                problemId="resize-problem"
                 inputRef={firstBox}
               />
             </div>
@@ -374,6 +332,7 @@ function ResizeImages() {
                 value={settings.width}
                 onChange={(width) => change({ width })}
                 invalid={Boolean(problem)}
+                problemId="resize-problem"
                 inputRef={firstBox}
               />
               <NumberBox
@@ -382,6 +341,7 @@ function ResizeImages() {
                 value={settings.height}
                 onChange={(height) => change({ height })}
                 invalid={Boolean(problem)}
+                problemId="resize-problem"
               />
             </div>
           )}
