@@ -1,0 +1,51 @@
+import {
+  File,
+  FilePenLine,
+  FileSpreadsheet,
+  Files,
+  FileText,
+  Film,
+  Image,
+  ImagePlus,
+  Images,
+  LayoutGrid,
+  Lock,
+  LockOpen,
+  Minimize2,
+  Presentation,
+  Repeat,
+  Scaling,
+  Scissors,
+  Sheet,
+  Shrink,
+  type LucideIcon,
+} from 'lucide-react'
+import type { ToolCategory } from '../tools/types.ts'
+
+export const TOOL_ICONS: Record<string, LucideIcon> = {
+  'merge-pdf': Files,
+  'organise-pdf': LayoutGrid,
+  'split-pdf': Scissors,
+  'images-to-pdf': ImagePlus,
+  'pdf-to-images': Images,
+  'protect-pdf': Lock,
+  'unlock-pdf': LockOpen,
+  'compress-pdf': Minimize2,
+  'word-to-pdf': FileText,
+  'excel-to-pdf': Sheet,
+  'powerpoint-to-pdf': Presentation,
+  'pdf-to-word': FilePenLine,
+  'pdf-to-excel': FileSpreadsheet,
+  'convert-images': Repeat,
+  'resize-images': Scaling,
+  'compress-images': Shrink,
+  'video-to-gif': Film,
+}
+
+export const CATEGORY_ICONS: Record<ToolCategory | 'All', LucideIcon> = {
+  All: LayoutGrid,
+  PDF: File,
+  Documents: FileText,
+  Images: Image,
+  Video: Film,
+}

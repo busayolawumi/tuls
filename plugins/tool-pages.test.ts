@@ -18,6 +18,7 @@ describe('toolPage', () => {
     const page = toolPage({
       id: 'video-to-gif',
       name: 'Video to GIF',
+      short: 'GIFs',
       description: 'Makes GIFs.',
       category: 'Video',
       accepts: ['mp4'],

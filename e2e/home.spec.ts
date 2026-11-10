@@ -47,6 +47,35 @@ test('the tools are grouped by kind', async ({ page }) => {
   await expect(images.getByRole('link').first()).toContainText('Convert images')
 })
 
+test('the kind buttons show one group at a time', async ({ page }) => {
+  await page.goto('/')
+  const kinds = page.getByRole('group', { name: 'Kinds of tools' })
+  await expect(kinds.getByRole('button')).toHaveText([
+    'All',
+    'PDF',
+    'Documents',
+    'Images',
+    'Video',
+  ])
+  await expect(kinds.getByRole('button', { name: 'All' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  await expect(cards(page)).toHaveCount(17)
+
+  await kinds.getByRole('button', { name: 'Images' }).click()
+  await expect(page.getByRole('heading', { level: 2 })).toHaveText(['Images'])
+  await expect(cards(page)).toHaveText([
+    /^Convert imagesHEIC to JPG/,
+    /^Resize images/,
+    /^Compress images/,
+  ])
+  expect(await axeViolations(page)).toEqual([])
+
+  await kinds.getByRole('button', { name: 'All' }).click()
+  await expect(cards(page)).toHaveCount(17)
+})
+
 test('searching narrows the list, best match first', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))

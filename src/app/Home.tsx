@@ -14,7 +14,7 @@ import { usePageDrop } from '../lib/usePageDrop.ts'
 import { useTitle } from '../lib/useTitle.ts'
 import { HEADLINE, SITE_NAME, TAGLINE } from '../site.ts'
 import { categories, tools } from '../tools/registry.ts'
-import type { ToolManifest } from '../tools/types.ts'
+import type { ToolCategory, ToolManifest } from '../tools/types.ts'
 import {
   acceptAll,
   FIT_MESSAGES,
@@ -24,8 +24,10 @@ import {
   unknownMessage,
 } from './dropped.ts'
 import { searchTools } from './search.ts'
+import { CATEGORY_ICONS, TOOL_ICONS } from './toolIcons.ts'
 
-const HEADING = 'text-sm font-medium text-zinc-500 dark:text-zinc-400'
+const HEADING =
+  'flex items-center gap-2 text-sm font-medium text-zinc-500 dark:text-zinc-400'
 const TEXT_BUTTON = 'text-sm text-link underline-offset-2 hover:underline'
 const ACCEPT = acceptAll(tools)
 
@@ -39,21 +41,33 @@ function ToolList({
   opening?: string
 }) {
   return (
-    <ul className="mt-3 grid gap-3 sm:grid-cols-2">
-      {list.map((tool) => (
-        <li key={tool.id}>
-          <ToolLink
-            tool={tool}
-            onClick={onOpen && ((event) => onOpen(tool, event))}
-            className="block h-full rounded-lg border border-zinc-200 p-4 transition hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
-          >
-            <span className="font-medium">{tool.name}</span>
-            <span className="mt-1 block text-sm text-zinc-600 dark:text-zinc-400">
-              {opening === tool.id ? 'Opening…' : tool.description}
-            </span>
-          </ToolLink>
-        </li>
-      ))}
+    <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5">
+      {list.map((tool) => {
+        const ToolIcon = TOOL_ICONS[tool.id]
+        return (
+          <li key={tool.id}>
+            <ToolLink
+              tool={tool}
+              onClick={onOpen && ((event) => onOpen(tool, event))}
+              className="flex h-full flex-col gap-2.5 rounded-lg border border-zinc-200 p-3 transition hover:border-zinc-400 hover:bg-zinc-50 sm:flex-row sm:items-start sm:gap-3 sm:p-3.5 dark:border-zinc-800 dark:hover:border-zinc-600 dark:hover:bg-zinc-900/60"
+            >
+              <span className="grid size-9 shrink-0 place-items-center rounded-md bg-zinc-100 text-orange-600 dark:bg-zinc-900 dark:text-orange-400">
+                {ToolIcon && (
+                  <ToolIcon className="size-[18px]" aria-hidden="true" />
+                )}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm leading-snug font-medium">
+                  {tool.name}
+                </span>
+                <span className="mt-0.5 block text-[13px] leading-snug text-zinc-600 dark:text-zinc-400">
+                  {opening === tool.id ? 'Opening…' : tool.short}
+                </span>
+              </span>
+            </ToolLink>
+          </li>
+        )
+      })}
     </ul>
   )
 }
@@ -74,6 +88,7 @@ function Home() {
   const [query, setQuery] = useState('')
   const [chosen, setChosen] = useState<File[]>()
   const [opening, setOpening] = useState<string>()
+  const [kind, setKind] = useState<ToolCategory | 'All'>('All')
   const search = useRef<HTMLInputElement>(null)
   const picker = useRef<HTMLInputElement>(null)
   const finder = useRef<HTMLButtonElement>(null)
@@ -123,7 +138,7 @@ function Home() {
 
   return (
     <>
-      <section className="flex flex-col items-center pt-12 pb-10 text-center sm:pt-20 sm:pb-14">
+      <section className="flex flex-col items-center pt-10 pb-8 text-center sm:pt-16 sm:pb-12">
         <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
           {HEADLINE}
         </h1>
@@ -264,22 +279,61 @@ function Home() {
               )}
             </section>
           ) : (
-            <div className="pb-8">
-              {categories.map((category) => (
-                <section
-                  key={category}
-                  aria-labelledby={`tools-${category}`}
-                  className="mt-8"
-                >
-                  <h2 id={`tools-${category}`} className={HEADING}>
-                    {category}
-                  </h2>
-                  <ToolList
-                    list={tools.filter((tool) => tool.category === category)}
-                  />
-                </section>
-              ))}
-            </div>
+            <>
+              <div
+                role="group"
+                aria-label="Kinds of tools"
+                className="mt-5 flex flex-wrap gap-1.5"
+              >
+                {(['All', ...categories] as const).map((option) => {
+                  const KindIcon = CATEGORY_ICONS[option]
+                  const on = kind === option
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setKind(option)}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] transition ${
+                        on
+                          ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-50 dark:bg-zinc-50 dark:text-zinc-900'
+                          : 'border-zinc-200 text-zinc-600 hover:border-zinc-400 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:text-zinc-50'
+                      }`}
+                    >
+                      <KindIcon
+                        className="hidden size-3.5 sm:block"
+                        aria-hidden="true"
+                      />
+                      {option}
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="pb-8">
+                {categories
+                  .filter((category) => kind === 'All' || kind === category)
+                  .map((category) => {
+                    const KindIcon = CATEGORY_ICONS[category]
+                    return (
+                      <section
+                        key={category}
+                        aria-labelledby={`tools-${category}`}
+                        className="mt-7"
+                      >
+                        <h2 id={`tools-${category}`} className={HEADING}>
+                          <KindIcon className="size-4" aria-hidden="true" />
+                          {category}
+                        </h2>
+                        <ToolList
+                          list={tools.filter(
+                            (tool) => tool.category === category,
+                          )}
+                        />
+                      </section>
+                    )
+                  })}
+              </div>
+            </>
           )}
         </>
       )}

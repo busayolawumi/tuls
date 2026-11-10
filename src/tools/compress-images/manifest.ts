@@ -3,6 +3,7 @@ import type { ToolManifest } from '../types.ts'
 export const manifest: ToolManifest = {
   id: 'compress-images',
   name: 'Compress images',
+  short: 'Smaller files, same look',
   description:
     'Make JPG, PNG, WebP and HEIC images smaller in file size, keeping how they look, right in your browser. Your files never leave your device.',
   category: 'Images',

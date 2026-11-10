@@ -3,6 +3,7 @@ import type { ToolManifest } from '../types.ts'
 export const manifest: ToolManifest = {
   id: 'powerpoint-to-pdf',
   name: 'PowerPoint to PDF',
+  short: 'Slides and decks',
   description:
     'Turn PowerPoint presentations into PDFs, with LibreOffice running in your browser. Your files never leave your device.',
   category: 'Documents',

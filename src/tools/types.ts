@@ -11,7 +11,9 @@ export type ToolManifest = {
   id: string
   /** What it does, in a few words, e.g. "Video to GIF". */
   name: string
-  /** One sentence for the home page, search results and link previews. */
+  /** A few words for its card on the home page, e.g. "Combine PDFs into one". */
+  short: string
+  /** One sentence for search results, link previews and its own page. */
   description: string
   category: ToolCategory
   /** File extensions it opens, without dots. Empty if it doesn't take files. */

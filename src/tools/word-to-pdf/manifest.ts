@@ -3,6 +3,7 @@ import type { ToolManifest } from '../types.ts'
 export const manifest: ToolManifest = {
   id: 'word-to-pdf',
   name: 'Word to PDF',
+  short: 'DOCX, DOC, ODT or RTF',
   description:
     'Turn Word documents into PDFs, with LibreOffice running in your browser. Your files never leave your device.',
   category: 'Documents',

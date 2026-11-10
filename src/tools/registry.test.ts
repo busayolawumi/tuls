@@ -60,4 +60,11 @@ describe('the tool registry', () => {
       }
     }
   })
+
+  it('gives every tool a short card label', () => {
+    for (const tool of tools) {
+      expect(tool.short, tool.id).toMatch(/^[A-Z][^.]*[^.\s]$/)
+      expect(tool.short.length, tool.id).toBeLessThanOrEqual(32)
+    }
+  })
 })

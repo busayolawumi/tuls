@@ -3,6 +3,7 @@ import type { ToolManifest } from '../types.ts'
 export const manifest: ToolManifest = {
   id: 'organise-pdf',
   name: 'Organise PDF',
+  short: 'Reorder, rotate or delete pages',
   description:
     'Reorder, rotate and delete the pages of a PDF. Your files never leave your device.',
   category: 'PDF',

@@ -3,6 +3,7 @@ import type { ToolManifest } from '../types.ts'
 export const manifest: ToolManifest = {
   id: 'resize-images',
   name: 'Resize images',
+  short: 'By percentage or size',
   description:
     'Make images smaller in width and height, by a percentage or to a size you choose, right in your browser. Your files never leave your device.',
   category: 'Images',
