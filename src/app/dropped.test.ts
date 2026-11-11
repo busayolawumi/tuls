@@ -53,6 +53,7 @@ describe('toolsFor', () => {
       'Convert images',
       'Resize images',
       'Compress images',
+      'Image to text',
     ])
     expect(namesFor(file('a.docx'), file('b.doc'))).toEqual(['Word to PDF'])
     expect(namesFor(file('clip.mov'))).toEqual(['Video to GIF'])

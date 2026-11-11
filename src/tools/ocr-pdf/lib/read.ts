@@ -29,7 +29,7 @@ async function draw(doc: PDFDocumentProxy, number: number) {
 }
 
 /** A copy turned `turn` quarter turns clockwise, and scaled. */
-function turned(source: HTMLCanvasElement, turn: number, scale = 1) {
+export function turned(source: HTMLCanvasElement, turn: number, scale = 1) {
   const width = Math.round(source.width * scale)
   const height = Math.round(source.height * scale)
   const canvas = document.createElement('canvas')
@@ -42,7 +42,7 @@ function turned(source: HTMLCanvasElement, turn: number, scale = 1) {
   return canvas
 }
 
-const png = (canvas: HTMLCanvasElement) =>
+export const png = (canvas: HTMLCanvasElement) =>
   new Promise<Blob>((resolve, reject) =>
     canvas.toBlob(
       (blob) =>
@@ -52,7 +52,7 @@ const png = (canvas: HTMLCanvasElement) =>
   )
 
 // Safari is slow to let a canvas's memory go by itself.
-const free = (canvas: HTMLCanvasElement) => {
+export const free = (canvas: HTMLCanvasElement) => {
   canvas.width = canvas.height = 0
 }
 
@@ -63,7 +63,9 @@ async function readPage(
 ): Promise<PageOutcome> {
   const { canvas, dpi } = await draw(doc, number)
   try {
-    let read = await readPicture(reader, await png(canvas), dpi, true)
+    let read = await readPicture(reader, await png(canvas), dpi, {
+      layer: true,
+    })
     let turn = 0
     if (read.confidence < TRY_TURNS) {
       const scale = Math.min(1, SMALL / Math.max(canvas.width, canvas.height))
@@ -75,7 +77,6 @@ async function readPage(
             reader,
             await png(small),
             Math.max(1, Math.round(dpi * scale)),
-            false,
           )
           scores.push(quick.confidence)
         } finally {
@@ -86,7 +87,9 @@ async function readPage(
       if (turn) {
         const upright = turned(canvas, turn)
         try {
-          read = await readPicture(reader, await png(upright), dpi, true)
+          read = await readPicture(reader, await png(upright), dpi, {
+            layer: true,
+          })
         } finally {
           free(upright)
         }

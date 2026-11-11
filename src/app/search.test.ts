@@ -31,6 +31,7 @@ describe('searchTools', () => {
       'Convert images',
       'Resize images',
       'Compress images',
+      'Image to text',
     ])
     expect(names('mov')).toEqual(['Video to GIF'])
     expect(names('csv')).toEqual(['Excel to PDF'])

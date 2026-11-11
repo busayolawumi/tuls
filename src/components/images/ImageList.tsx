@@ -6,9 +6,10 @@ const SHOWN = 6
 type Props = {
   files: File[]
   leftOut: number
+  most?: number
 }
 
-export function ImageList({ files, leftOut }: Props) {
+export function ImageList({ files, leftOut, most = MAX_IMAGES }: Props) {
   return (
     <>
       <ul
@@ -37,7 +38,7 @@ export function ImageList({ files, leftOut }: Props) {
       </ul>
       {leftOut > 0 && (
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-          Up to {MAX_IMAGES} images can go in at once, so {leftOut}{' '}
+          Up to {most} images can go in at once, so {leftOut}{' '}
           {leftOut === 1 ? 'was' : 'were'} left out.
         </p>
       )}

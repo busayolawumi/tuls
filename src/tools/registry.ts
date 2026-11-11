@@ -5,6 +5,7 @@ import { manifest as convertImages } from './convert-images/manifest.ts'
 import { manifest as excelToPdf } from './excel-to-pdf/manifest.ts'
 import { manifest as imagesToPdf } from './images-to-pdf/manifest.ts'
 import { manifest as mergePdf } from './merge-pdf/manifest.ts'
+import { manifest as imageToText } from './image-to-text/manifest.ts'
 import { manifest as ocrPdf } from './ocr-pdf/manifest.ts'
 import { manifest as organisePdf } from './organise-pdf/manifest.ts'
 import { manifest as pdfToExcel } from './pdf-to-excel/manifest.ts'
@@ -49,5 +50,6 @@ export const tools: ToolManifest[] = [
   convertImages,
   resizeImages,
   compressImages,
+  imageToText,
   videoToGif,
 ]

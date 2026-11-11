@@ -9,6 +9,7 @@ import {
   ImagePlus,
   Images,
   LayoutGrid,
+  LetterText,
   Lock,
   LockOpen,
   Minimize2,
@@ -41,6 +42,7 @@ export const TOOL_ICONS: Record<string, LucideIcon> = {
   'convert-images': Repeat,
   'resize-images': Scaling,
   'compress-images': Shrink,
+  'image-to-text': LetterText,
   'video-to-gif': Film,
 }
 

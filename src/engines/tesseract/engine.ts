@@ -18,8 +18,20 @@ export type PageRead = {
   /** Tesseract's mean confidence in its words, 0–100. */
   confidence: number
   words: number
+  text: string
+  /** Each paragraph's lines, as words with how sure Tesseract was of each. */
+  paragraphs?: ReadWord[][][]
   layer?: Uint8Array<ArrayBuffer>
 }
+
+export type ReadWord = { text: string; confidence: number }
+
+/** How to read: as a page of text, or as text scattered about (sparse). */
+export type ReadOptions = { layer?: boolean; sparse?: boolean; words?: boolean }
+
+// Tesseract's page layouts: worked out automatically, or sparse text.
+const AUTO = '3'
+const SPARSE = '11'
 
 // Starting took 0.2–0.6 s on a laptop, once downloaded.
 const START_LIMIT = 60_000
@@ -146,7 +158,7 @@ export async function readPicture(
   reader: Reader,
   picture: Blob,
   dpi: number,
-  layer: boolean,
+  { layer = false, sparse = false, words = false }: ReadOptions = {},
 ): Promise<PageRead> {
   const bytes = new Uint8Array(await picture.arrayBuffer())
   // Checked just before each call. Bytes go in as they are, so nothing waits
@@ -156,12 +168,15 @@ export async function readPicture(
   }
   const read = (async () => {
     live()
-    await reader.setParameters({ user_defined_dpi: String(dpi) })
+    await reader.setParameters({
+      user_defined_dpi: String(dpi),
+      tessedit_pageseg_mode: sparse ? SPARSE : AUTO,
+    } as Partial<Tesseract.WorkerParams>)
     live()
     return reader.recognize(
       bytes,
       { pdfTextOnly: true },
-      { text: true, pdf: layer },
+      { text: true, pdf: layer, blocks: words },
     )
   })()
   const { data } = await stoppable(
@@ -174,6 +189,14 @@ export async function readPicture(
   return {
     confidence: data.confidence,
     words: data.text.match(WORD)?.length ?? 0,
+    text: data.text,
+    paragraphs: data.blocks?.flatMap((block) =>
+      block.paragraphs.map((paragraph) =>
+        paragraph.lines.map((line) =>
+          line.words.map(({ text, confidence }) => ({ text, confidence })),
+        ),
+      ),
+    ),
     layer: data.pdf ? new Uint8Array(data.pdf) : undefined,
   }
 }
