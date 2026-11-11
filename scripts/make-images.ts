@@ -4,12 +4,20 @@
 //   public/favicon-32.png      for browsers without SVG icons: a dark tile
 //   public/apple-touch-icon.png  the phone home-screen icon: a dark square
 //   public/og-image.png        the link-preview card (1200×630)
+//   public/og/<tool>.png       each tool's own link-preview card
 // The PNGs are drawn by Chrome, with the real Geist font.
-// Run it with `npm run images` after changing the icon, headline or tagline.
-import { readFile, writeFile } from 'node:fs/promises'
+// Run it with `npm run images` after changing the icon, headline or tagline,
+// or `npm run images -- tools` for the tools' cards only (after adding a tool
+// or changing one's name or description).
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { chromium } from '@playwright/test'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { TOOL_ICONS } from '../src/app/toolIcons.ts'
 import { HEADLINE, SITE_URL, TAGLINE } from '../src/site.ts'
+import { tools } from '../src/tools/registry.ts'
+import type { ToolManifest } from '../src/tools/types.ts'
 
 const ORANGE = '#ea580c' // orange-600, the accent
 const INK_LIGHT = '#18181b' // zinc-900
@@ -69,14 +77,15 @@ async function fontFace(family: string, file: string) {
   return `@font-face { font-family: '${family}'; font-weight: 100 900; src: url(data:font/woff2;base64,${data.toString('base64')}) format('woff2'); }`
 }
 
+const geist = () =>
+  fontFace(
+    'Geist',
+    '@fontsource-variable/geist/files/geist-latin-wght-normal.woff2',
+  )
+
 // Laid out like Trim's card: icon and wordmark, headline, tagline, address.
 async function ogImageHtml() {
-  const fonts = [
-    await fontFace(
-      'Geist',
-      '@fontsource-variable/geist/files/geist-latin-wght-normal.woff2',
-    ),
-  ].join('\n')
+  const fonts = await geist()
   const host = new URL(SITE_URL).host
   return `<!doctype html><html><head><style>
     ${fonts}
@@ -95,6 +104,48 @@ async function ogImageHtml() {
     <div class="address">${host}</div>
   </div></body></html>`
 }
+
+const escape = (text: string) =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+// A tool's card: the wordmark, the tool's icon and name, what it does, and
+// its address. The description loses its last sentence, which every tool
+// shares ("Your files never leave your device"); the tagline says so.
+async function toolImageHtml(tool: ToolManifest) {
+  const fonts = await geist()
+  const icon = renderToStaticMarkup(
+    createElement(TOOL_ICONS[tool.id], {
+      size: 72,
+      color: ORANGE,
+      strokeWidth: 1.75,
+    }),
+  )
+  const what = tool.description.replace(
+    /\s*Your files never leave your device\.$/,
+    '',
+  )
+  const address = `${new URL(SITE_URL).host}/${tool.id}`
+  return `<!doctype html><html><head><style>
+    ${fonts}
+    body { margin: 0; width: 1200px; height: 630px; background: ${CARD}; color: ${INK_DARK}; font-family: 'Geist', sans-serif; }
+    .card { box-sizing: border-box; height: 100%; padding: 72px 80px 72px; display: flex; flex-direction: column; }
+    .brand { display: flex; align-items: center; gap: 14px; font-size: 36px; font-weight: 450; letter-spacing: -0.03em; }
+    .brand svg { width: 40px; height: 40px; }
+    .dot { color: ${ORANGE}; }
+    .tool { margin-top: 52px; display: flex; align-items: center; gap: 32px; }
+    .tile { width: 120px; height: 120px; border-radius: 28px; background: #18181b; border: 1.5px solid #27272a; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    h1 { margin: 0; font-size: 84px; font-weight: 450; letter-spacing: -0.035em; line-height: 1; }
+    p { margin: 32px 0 36px; font-size: 32px; line-height: 1.3; color: ${MUTED}; letter-spacing: -0.01em; text-wrap: pretty; }
+    .address { margin-top: auto; align-self: flex-start; font-size: 28px; padding: 14px 26px; border-radius: 14px; border: 1.5px solid #27272a; background: #18181b; }
+  </style></head><body><div class="card">
+    <div class="brand"><svg viewBox="0 0 32 32">${toolbox(INK_DARK)}</svg><span>Tuls<span class="dot">.</span></span></div>
+    <div class="tool"><div class="tile">${icon}</div><h1>${escape(tool.name)}</h1></div>
+    <p>${escape(what)} Your files never leave your device.</p>
+    <div class="address">${address}</div>
+  </div></body></html>`
+}
+
+const onlyTools = process.argv.includes('tools')
 
 const browser = await chromium
   .launch({ channel: 'chrome' })
@@ -119,11 +170,17 @@ try {
   const bare = (svg: string) =>
     `<!doctype html><html><body style="margin:0">${svg}</body></html>`
 
-  await writeFile(out('favicon.svg'), faviconSvg)
-  console.log('wrote public/favicon.svg')
-  await render(bare(favicon32), 32, 32, 'favicon-32.png')
-  await render(bare(appleIcon), 180, 180, 'apple-touch-icon.png')
-  await render(await ogImageHtml(), 1200, 630, 'og-image.png')
+  if (!onlyTools) {
+    await writeFile(out('favicon.svg'), faviconSvg)
+    console.log('wrote public/favicon.svg')
+    await render(bare(favicon32), 32, 32, 'favicon-32.png')
+    await render(bare(appleIcon), 180, 180, 'apple-touch-icon.png')
+    await render(await ogImageHtml(), 1200, 630, 'og-image.png')
+  }
+  await mkdir(out('og'), { recursive: true })
+  for (const tool of tools) {
+    await render(await toolImageHtml(tool), 1200, 630, `og/${tool.id}.png`)
+  }
 } finally {
   await browser.close()
 }

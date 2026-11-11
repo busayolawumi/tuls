@@ -49,6 +49,10 @@ function Footer() {
         GitHub
       </a>
       {' · '}
+      <Link className={link} to="/privacy">
+        Privacy
+      </Link>
+      {' · '}
       <a className={link} href="/licences.txt">
         Licences
       </a>

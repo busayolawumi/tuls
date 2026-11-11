@@ -5,6 +5,7 @@ import ErrorPage from './ErrorPage.tsx'
 import Home from './Home.tsx'
 import Layout from './Layout.tsx'
 import NotFound from './NotFound.tsx'
+import Privacy from './Privacy.tsx'
 
 // Each tool's code is only downloaded when its page is opened.
 const toolPages = import.meta.glob<{ default: ComponentType }>(
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
                 (await toolPages[`../tools/${tool.id}/Tool.tsx`]()).default,
             },
           })),
+          { path: 'privacy', element: <Privacy /> },
           { path: '*', element: <NotFound /> },
         ],
       },

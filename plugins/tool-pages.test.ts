@@ -1,4 +1,6 @@
+import { existsSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import { tools } from '../src/tools/registry.ts'
 import {
   headTags,
   homePage,
@@ -28,7 +30,25 @@ describe('toolPage', () => {
       path: '/video-to-gif',
       title: 'Video to GIF · Tuls',
       description: 'Makes GIFs.',
+      image: {
+        path: '/og/video-to-gif.png',
+        alt: 'Tuls: Video to GIF. Makes GIFs.',
+      },
     })
+  })
+
+  it('has a preview card for every tool (npm run images -- tools)', () => {
+    for (const tool of tools) {
+      const card = new URL(`../public/og/${tool.id}.png`, import.meta.url)
+      expect(existsSync(card), tool.id).toBe(true)
+    }
+  })
+
+  it('uses the tool’s own card in its preview tags', () => {
+    const tags = headTags(toolPage(tools[0]))
+    expect(tags).toContain(
+      `<meta property="og:image" content="https://tuls.bsyo.dev/og/${tools[0].id}.png" />`,
+    )
   })
 })
 

@@ -2,7 +2,39 @@
 
 PDF, document, image and video tools that run in your browser. Your files never leave your device.
 
-Work in progress.
+**[tuls.bsyo.dev](https://tuls.bsyo.dev)**
+
+Most online file tools upload your file to a server, convert it there and send it back. Tuls does the work on your own device instead: Word to PDF, PDF to Word, compressing, merging, password-protecting, reading scanned pages, converting iPhone photos and more, all in a browser tab. There are no uploads, accounts, cookies or analytics, and the [privacy page](https://tuls.bsyo.dev/privacy) explains what that means in practice.
+
+It started as [Gify](https://github.com/busayolawumi/gify), a video-to-GIF converter, and grew into one toolkit for everyday file jobs.
+
+## How it works
+
+Each tool is a small page; the heavy lifting is done by real engines compiled to WebAssembly, downloaded only when a tool first needs them and then kept by the browser:
+
+| Engine                                           | Used for                                                |
+| ------------------------------------------------ | ------------------------------------------------------- |
+| LibreOffice                                      | Word, Excel and PowerPoint to PDF                       |
+| PyMuPDF and pdf2docx, in Python through Pyodide  | PDF to Word, PDF to Excel, Compress PDF                 |
+| Tesseract                                        | OCR PDF, Image to text                                  |
+| qpdf                                             | Protect PDF, Unlock PDF, locked PDFs in the other tools |
+| FFmpeg                                           | Video to GIF                                            |
+| pdf.js and pdf-lib                               | Viewing and changing PDFs                               |
+| libheif, MozJPEG, libwebp, oxipng, libimagequant | iPhone photos, and image conversion and compression     |
+
+The privacy promise is enforced, not only stated. The site's Content Security Policy only lets the page connect to Tuls itself, the end-to-end tests fail if any request leaves the site while a tool works, and every output has its author, location and camera details removed.
+
+## Things that were harder than they look
+
+**Office documents in a browser tab.** LibreOffice compiled to WebAssembly is about 80 MB and needs a gigabyte of memory. The stock build hung on 6 of 19 mixed conversions; giving it 8 threads instead of 4 made it 64 of 64, and still fits on an iPhone. It's served pre-compressed, saved in Cache Storage, watched by a watchdog that restarts it if it stalls, and only its own worker is allowed `eval`, so the page's security policy stays strict. Only the three Office pages are cross-origin isolated, since only LibreOffice needs it.
+
+**Making LibreOffice's PDFs look like Word's.** Word underlines trailing spaces in some headings and LibreOffice doesn't, so Tuls rewrites those spaces as a tab before converting. Word's bullets use a Symbol font LibreOffice lacks, so Tuls ships a free one with Word's proportions. Fonts LibreOffice doesn't have, like Office's Aptos, are swapped for the free font closest in width, measured letter by letter, so lines break where Office breaks them.
+
+**PDF to Word and Excel.** PDFs made by Word often have letters like "ti" and "ft" stored as single glyphs with no text behind them, so "Evaluation" copies out as "Evalua7on". Tuls repairs the PDF's text map first: 173 garbled words on one 45-page document became none. Bank statements usually have no table lines at all, so Tuls finds columns from where the words sit, not from lines.
+
+**Passwords.** pdf-lib's encryption left some text readable without the password, and its decryption broke PDFs locked by Apple's apps. Tuls uses qpdf instead, and stores passwords in two Unicode forms, because Apple's PDF reader checks accented passwords differently from every other reader.
+
+**Video to GIF on iPhones.** FFmpeg's multi-threaded build deadlocked on iPhone HEVC videos, with no error, just an endless spinner, so Gify, and now Tuls, uses the single-threaded one. GIFs use a pattern dither with one palette per clip, chosen side by side against smoother options.
 
 ## Tools
 
@@ -34,6 +66,7 @@ Work in progress.
 - `npm run format` runs Prettier, which also sorts Tailwind classes
 - `npm test` runs the unit tests (Vitest)
 - `npm run test:e2e` builds, then runs the browser tests (Playwright)
+- `npm run images` draws the icons and link-preview cards (`npm run images -- tools` for the tools' cards only)
 
 ## Licence
 

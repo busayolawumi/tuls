@@ -26,6 +26,8 @@ export type PageMeta = {
   description: string
   /** Keeps the page out of search results, and leaves out the preview tags. */
   noindex?: boolean
+  /** Its own link-preview card, and what the card says; else the site's. */
+  image?: { path: string; alt: string }
 }
 
 export const homePage: PageMeta = {
@@ -41,11 +43,22 @@ export const notFoundPage: PageMeta = {
   noindex: true,
 }
 
+export const privacyPage: PageMeta = {
+  path: '/privacy',
+  title: `Privacy · ${SITE_NAME}`,
+  description:
+    'Tuls runs every tool in your browser: your files never leave your device. What Tuls downloads, what stays on your device, and what it never collects.',
+}
+
 export function toolPage(tool: ToolManifest): PageMeta {
   return {
     path: `/${tool.id}`,
     title: `${tool.name} · ${SITE_NAME}`,
     description: tool.description,
+    image: {
+      path: `/og/${tool.id}.png`,
+      alt: `${SITE_NAME}: ${tool.name}. ${tool.description}`,
+    },
   }
 }
 
@@ -56,7 +69,16 @@ const escape = (text: string) =>
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
 
-export function headTags({ path, title, description, noindex }: PageMeta) {
+export function headTags({
+  path,
+  title,
+  description,
+  noindex,
+  image = {
+    path: '/og-image.png',
+    alt: `${SITE_NAME}: ${HEADLINE} ${TAGLINE}`,
+  },
+}: PageMeta) {
   const url = escape(SITE_URL + path)
   if (noindex) {
     return [
@@ -74,12 +96,12 @@ export function headTags({ path, title, description, noindex }: PageMeta) {
     `<meta property="og:url" content="${url}" />`,
     `<meta property="og:title" content="${escape(title)}" />`,
     `<meta property="og:description" content="${escape(description)}" />`,
-    // One preview image for every page for now (scripts/make-images.ts).
-    `<meta property="og:image" content="${escape(`${SITE_URL}/og-image.png`)}" />`,
+    // Drawn by scripts/make-images.ts.
+    `<meta property="og:image" content="${escape(SITE_URL + image.path)}" />`,
     `<meta property="og:image:type" content="image/png" />`,
     `<meta property="og:image:width" content="1200" />`,
     `<meta property="og:image:height" content="630" />`,
-    `<meta property="og:image:alt" content="${escape(`${SITE_NAME}: ${HEADLINE} ${TAGLINE}`)}" />`,
+    `<meta property="og:image:alt" content="${escape(image.alt)}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
   ].join('\n    ')
 }
@@ -117,6 +139,7 @@ export function toolPages(): Plugin {
           withHead(index, toolPage(tool)),
         )
       }
+      await writeFile(join(dir, 'privacy.html'), withHead(index, privacyPage))
       await writeFile(join(dir, '404.html'), withHead(index, notFoundPage))
     },
   }
