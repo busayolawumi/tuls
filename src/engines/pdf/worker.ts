@@ -1,9 +1,11 @@
 // Runs PDF work in a background thread, so the page stays responsive with
 // big files. Started by client.ts.
+import notoSans from '@expo-google-fonts/noto-sans/400Regular/NotoSans_400Regular.ttf?url'
 import qpdfWasm from '@neslinesli93/qpdf-wasm/dist/qpdf.wasm?url'
 import { setQpdfWasm } from '../qpdf/qpdf'
 import { cleanPdf } from './clean'
 import { pdfErrorKind } from './errors'
+import { setUnicodeFont } from './forms'
 import { imagesToPdf, type PageImage, type PageSize } from './images'
 import { mergePdfs } from './merge'
 import { organisePdf, type PagePlan } from './organise'
@@ -14,6 +16,12 @@ import { addTextLayers, type TextLayer } from './textLayers'
 
 // qpdf's engine is only fetched when a PDF with a password comes along.
 setQpdfWasm(qpdfWasm)
+// Noto Sans only when a form answer has letters Helvetica lacks.
+setUnicodeFont(async () => {
+  const response = await fetch(notoSans)
+  if (!response.ok) throw new Error(`Noto Sans: ${response.status}`)
+  return response.arrayBuffer()
+})
 
 export type WorkerRequest =
   | { id: number; op: 'merge'; files: ArrayBuffer[] }

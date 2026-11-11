@@ -38,9 +38,9 @@ export default defineConfig({
   // Pre-bundling breaks the worker that ffmpeg.wasm starts. The PDF to Word
   // engine is one plain module, only imported by its worker: found that late,
   // it would make the dev server reload the page.
-  // qpdf and libheif, only imported by workers, are CommonJS: bundled up
-  // front, so the dev server can serve them as modules without reloading the
-  // page. jSquash finds its wasm next to its own files, so it stays as it is.
+  // qpdf, libheif and fontkit (through brotli), only imported by workers,
+  // are CommonJS: bundled up front, so the dev server can serve them as
+  // modules without reloading the page. jSquash finds its wasm next to its own files, so it stays as it is.
   optimizeDeps: {
     exclude: [
       '@ffmpeg/ffmpeg',
@@ -52,7 +52,11 @@ export default defineConfig({
       '@jsquash/oxipng',
       'libimagequant-wasm',
     ],
-    include: ['@neslinesli93/qpdf-wasm', 'libheif-js/libheif-wasm/libheif.js'],
+    include: [
+      '@neslinesli93/qpdf-wasm',
+      'libheif-js/libheif-wasm/libheif.js',
+      '@cantoo/fontkit',
+    ],
   },
   // ffmpeg.wasm starts its worker as a module and loads the core with import().
   // Workers are built on their own, with their own plugins.

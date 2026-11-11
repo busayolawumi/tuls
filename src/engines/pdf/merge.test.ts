@@ -3,6 +3,8 @@ import {
   PDFDict,
   PDFDocument,
   PDFName,
+  PDFRawStream,
+  decodePDFRawStream,
   type PDFForm,
   type PDFPage,
   StandardFonts,
@@ -74,6 +76,38 @@ async function widgetCount(bytes: Uint8Array) {
 }
 
 const place = { x: 20, y: 300, width: 200, height: 30 }
+
+/** The sizes Noto Sans is drawn at, in a PDF's form pictures. */
+async function notoSizes(bytes: Uint8Array) {
+  const doc = await PDFDocument.load(bytes)
+  const sizes: number[] = []
+  for (const [, object] of doc.context.enumerateIndirectObjects()) {
+    if (!(object instanceof PDFRawStream)) continue
+    const text = new TextDecoder('latin1').decode(
+      decodePDFRawStream(object).decode(),
+    )
+    for (const match of text.matchAll(/\/NotoSans\S*\s+([\d.]+)\s+Tf/g)) {
+      sizes.push(Number(match[1]))
+    }
+  }
+  return sizes
+}
+
+/** The base names of every font in a PDF. */
+async function fontNames(bytes: Uint8Array) {
+  const doc = await PDFDocument.load(bytes)
+  const names: string[] = []
+  for (const [, object] of doc.context.enumerateIndirectObjects()) {
+    if (
+      object instanceof PDFDict &&
+      object.get(PDFName.of('Type')) === PDFName.of('Font') &&
+      object.get(PDFName.of('Subtype')) !== PDFName.of('CIDFontType2')
+    ) {
+      names.push(object.lookup(PDFName.of('BaseFont'), PDFName).decodeText())
+    }
+  }
+  return names
+}
 
 describe('mergePdfs', () => {
   it('puts every page in, in the order given', async () => {
@@ -203,21 +237,61 @@ describe('mergePdfs with forms', () => {
     await doc.loadingTask.destroy()
   })
 
-  it('draws undrawn answers in Helvetica, with ? for letters it lacks', async () => {
+  it('draws undrawn answers with letters Helvetica lacks in Noto Sans', async () => {
+    const filled = await makeForm(
+      (form, page) => {
+        const answers = {
+          name: 'Ọlá Ẹ̀kọ́',
+          city: 'Αθήνα Київ',
+          plain: 'Plain café',
+          other: 'Tokyo 東京',
+        }
+        Object.entries(answers).forEach(([key, text], i) => {
+          const field = form.createTextField(key)
+          field.addToPage(page, { ...place, y: 300 - i * 40 })
+          field.setText(text)
+          for (const widget of field.acroField.getWidgets()) {
+            widget.dict.delete(PDFName.of('AP'))
+          }
+        })
+      },
+      { updateFieldAppearances: false },
+    )
+    const merged = await mergePdfs([filled])
+    const text = await firstPageText(merged)
+    expect(text).toContain('Ọlá Ẹ̀kọ́')
+    expect(text).toContain('Αθήνα Київ')
+    expect(text).toContain('Plain café')
+    // Letters Noto Sans lacks show as "?", as Helvetica's do.
+    expect(text).toContain('Tokyo ??')
+    // One copy of Noto Sans, cut down to the letters used, and Helvetica
+    // still for the answer it can draw.
+    const fonts = await fontNames(merged)
+    expect(fonts.filter((font) => font.includes('NotoSans'))).toHaveLength(1)
+    expect(fonts).toContain('Helvetica')
+    expect(merged.byteLength).toBeLessThan(60_000)
+    // The boxes were sized for Helvetica at 24 pt. Taller Noto Sans is made
+    // small enough that dots below and descenders aren't cut off.
+    const sizes = await notoSizes(merged)
+    expect(sizes.length).toBeGreaterThan(0)
+    for (const size of sizes) expect(size).toBeLessThanOrEqual(16)
+  })
+
+  it('doesn’t load Noto Sans for answers Helvetica can draw', async () => {
     const filled = await makeForm(
       (form, page) => {
         const name = form.createTextField('name')
         name.addToPage(page, place)
-        name.setText('Ọlá')
+        name.setText('Zoë Åström, 5 €')
         for (const widget of name.acroField.getWidgets()) {
           widget.dict.delete(PDFName.of('AP'))
         }
       },
       { updateFieldAppearances: false },
     )
-    // Not ideal, but a visibly wrong letter beats a silently missing answer.
-    // A Unicode font would fix it (see CLAUDE.md).
-    expect(await firstPageText(await mergePdfs([filled]))).toContain('?lá')
+    const merged = await mergePdfs([filled])
+    expect(await firstPageText(merged)).toContain('Zoë Åström, 5 €')
+    expect(await fontNames(merged)).toEqual(['Helvetica'])
   })
 
   it('leaves out buttons and hidden fields', async () => {
