@@ -40,6 +40,26 @@ declare const __PYMUPDF__: {
   wheel: string
 }
 
+/** Where text recognition's files are served, and their sizes (plugins/tesseract.ts). */
+declare const __TESSERACT__: {
+  /** Its folder, e.g. /engines/tesseract-7.0.0/. */
+  dir: string
+  /** The browser cache it's kept in (Cache Storage). */
+  cache: string
+  /** The worker script tesseract.js starts. */
+  worker: string
+  /**
+   * The engine in three builds, by what the browser's WebAssembly can do.
+   * `size` is as it arrives, `transfer` roughly what it costs to download.
+   */
+  cores: Record<
+    'relaxedSimd' | 'simd' | 'plain',
+    { url: string; size: number; transfer: number }
+  >
+  /** One file per language, by Tesseract's code, e.g. "eng". */
+  languages: Record<string, { url: string; size: number; transfer: number }>
+}
+
 /** The engine's font widths, for measuring text (plugins/libreoffice.ts). */
 declare module 'virtual:tuls/font-metrics' {
   const metrics: {

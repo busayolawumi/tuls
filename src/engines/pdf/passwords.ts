@@ -20,7 +20,7 @@ export function qpdfErrorKind({ output }: Pick<QpdfResult, 'output'>) {
 }
 
 /** qpdf's file, or the error it ended with. Warnings (3) still make a file. */
-function madeFile(result: QpdfResult, name: string) {
+export function madeFile(result: QpdfResult, name: string) {
   const file = result.files[name]
   if ((result.code === 0 || result.code === 3) && file) return file
   throw new PdfError(qpdfErrorKind(result), result.output)

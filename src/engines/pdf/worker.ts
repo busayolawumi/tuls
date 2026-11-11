@@ -10,6 +10,7 @@ import { organisePdf, type PagePlan } from './organise'
 import { protectPdf, unlockPdf } from './passwords'
 import { hasSignatures } from './signatures'
 import { splitPdf } from './split'
+import { addTextLayers, type TextLayer } from './textLayers'
 
 // qpdf's engine is only fetched when a PDF with a password comes along.
 setQpdfWasm(qpdfWasm)
@@ -23,6 +24,7 @@ export type WorkerRequest =
   | { id: number; op: 'protect'; file: ArrayBuffer; password: string }
   | { id: number; op: 'unlock'; file: ArrayBuffer; password: string }
   | { id: number; op: 'signed'; file: ArrayBuffer }
+  | { id: number; op: 'text'; file: ArrayBuffer; layers: TextLayer[] }
 export type WorkerResult = Uint8Array | Uint8Array[] | boolean
 export type WorkerResponse =
   | { id: number; ok: true; result: WorkerResult }
@@ -51,6 +53,8 @@ function run(request: WorkerRequest): Promise<WorkerResult> {
       return unlockPdf(request.file, request.password)
     case 'signed':
       return hasSignatures(request.file)
+    case 'text':
+      return addTextLayers(request.file, request.layers)
   }
 }
 

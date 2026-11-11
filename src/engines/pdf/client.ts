@@ -1,6 +1,7 @@
 import { PdfError, pdfErrorKind } from './errors'
 import type { PageImage, PageSize } from './images'
 import type { PagePlan } from './organise'
+import type { TextLayer } from './textLayers'
 import type { WorkerRequest, WorkerResponse, WorkerResult } from './worker'
 
 // Talks to the PDF worker. It's started the first time it's needed and kept
@@ -104,4 +105,18 @@ export function unlockPdfInBackground(file: ArrayBuffer, password: string) {
 /** Whether someone has signed a PDF (signatures.ts). The buffer is handed over. */
 export function hasSignaturesInBackground(file: ArrayBuffer) {
   return run<boolean>((id) => ({ id, op: 'signed', file }), [file])
+}
+
+/**
+ * Lays recognised text over a PDF's pages, turning sideways ones upright
+ * (textLayers.ts). The buffers are handed over.
+ */
+export function addTextLayersInBackground(
+  file: ArrayBuffer,
+  layers: TextLayer[],
+) {
+  return run<Uint8Array<ArrayBuffer>>(
+    (id) => ({ id, op: 'text', file, layers }),
+    [file, ...layers.map(({ layer }) => layer)],
+  )
 }

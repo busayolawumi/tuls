@@ -35,6 +35,7 @@ describe('toolsFor', () => {
       'Protect PDF',
       'Unlock PDF',
       'Compress PDF',
+      'OCR PDF',
       'PDF to Word',
       'PDF to Excel',
     ])

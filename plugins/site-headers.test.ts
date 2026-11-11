@@ -5,14 +5,16 @@ import { headersFor, matches, readRules } from './site-headers.ts'
 const rules = readRules()
 const POLICY = 'Content-Security-Policy'
 const ENGINE = '/engines/libreoffice-2.7.2/soffice.0123456789.js'
-// PDF to Word's engine, which works with the page's own policy.
+// Engines that work with the page's own policy.
 const PYMUPDF = '/engines/pymupdf-0.11.16/pyodide.asm.js'
+const TESSERACT = '/engines/tesseract-7.0.0/worker.0123456789.js'
 const PAGES = ['/', '/video-to-gif', '/word-to-pdf', '/no-such-page', '/404']
 const FILES = [
   '/assets/index-abc.js',
   '/licences.txt',
   '/pdfjs-6.4.299/cmaps/x',
   PYMUPDF,
+  TESSERACT,
 ]
 
 describe('vercel.json headers', () => {
@@ -93,6 +95,7 @@ describe('vercel.json headers', () => {
       '/pdfjs-6.4.299/x',
       ENGINE,
       PYMUPDF,
+      TESSERACT,
     ]) {
       expect(headersFor(rules, path)['Cache-Control'], path).toContain(
         'immutable',

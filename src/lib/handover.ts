@@ -5,14 +5,16 @@
 
 type Waiting = { tool: string; files: File[] }
 
-// Safari won't store files in private browsing, but will store their bytes.
+// Stored as bytes: Safari won't store File objects in private browsing,
+// and Firefox writes a File's contents later, so a page loading straight
+// after can find it missing.
 type Kept = {
   name: string
   type: string
   lastModified: number
   bytes: ArrayBuffer
 }
-type Saved = { tool: string; files: (File | Kept)[]; at: number }
+type Saved = { tool: string; files: Kept[]; at: number }
 
 const FLAG = 'tuls:handover'
 const DATABASE = 'tuls-handover'
@@ -40,9 +42,19 @@ async function withStore<T>(
 ) {
   const database = await openStore()
   try {
-    return await settled(
-      run(database.transaction(STORE, mode).objectStore(STORE)),
-    )
+    const transaction = database.transaction(STORE, mode)
+    // A write only counts once its transaction completes: Firefox drops it
+    // if the page reloads straight after the request succeeds.
+    const done = new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve()
+      transaction.onerror = transaction.onabort = () =>
+        reject(transaction.error ?? new Error('Storage'))
+    })
+    // If the request fails, its own error is the one that counts.
+    done.catch(() => {})
+    const result = await settled(run(transaction.objectStore(STORE)))
+    await done
+    return result
   } finally {
     database.close()
   }
@@ -59,22 +71,17 @@ export function handOver(tool: string, files: File[]) {
  * again there.
  */
 export async function handOverAcrossLoad(tool: string, files: File[]) {
-  const save = (kept: (File | Kept)[]) =>
-    withStore('readwrite', (store) =>
-      store.put({ tool, files: kept, at: Date.now() } satisfies Saved, KEY),
-    )
   try {
-    await save(files).catch(async () =>
-      save(
-        await Promise.all(
-          files.map(async (file) => ({
-            name: file.name,
-            type: file.type,
-            lastModified: file.lastModified,
-            bytes: await file.arrayBuffer(),
-          })),
-        ),
-      ),
+    const kept = await Promise.all(
+      files.map(async (file) => ({
+        name: file.name,
+        type: file.type,
+        lastModified: file.lastModified,
+        bytes: await file.arrayBuffer(),
+      })),
+    )
+    await withStore('readwrite', (store) =>
+      store.put({ tool, files: kept, at: Date.now() } satisfies Saved, KEY),
     )
     sessionStorage.setItem(FLAG, '1')
     return true
@@ -83,13 +90,11 @@ export async function handOverAcrossLoad(tool: string, files: File[]) {
   }
 }
 
-const asFile = (file: File | Kept) =>
-  file instanceof Blob
-    ? file
-    : new File([file.bytes], file.name, {
-        type: file.type,
-        lastModified: file.lastModified,
-      })
+const asFile = (file: Kept) =>
+  new File([file.bytes], file.name, {
+    type: file.type,
+    lastModified: file.lastModified,
+  })
 
 async function fromStorage(): Promise<Waiting | undefined> {
   try {

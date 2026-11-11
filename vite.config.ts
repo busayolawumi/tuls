@@ -8,6 +8,7 @@ import { pdfjsAssets } from './plugins/pdfjs-assets.ts'
 import { pymupdf } from './plugins/pymupdf.ts'
 import { qpdf } from './plugins/qpdf.ts'
 import { siteHeaders } from './plugins/site-headers.ts'
+import { tesseract } from './plugins/tesseract.ts'
 import { toolPages } from './plugins/tool-pages.ts'
 
 // The FFmpeg engine's real size, for the first-visit download percentage. The
@@ -28,6 +29,7 @@ export default defineConfig({
     pdfjsAssets(),
     libreOffice(),
     pymupdf(),
+    tesseract(),
     qpdf(),
   ],
   define: {

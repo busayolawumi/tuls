@@ -61,7 +61,7 @@ test('the kind buttons show one group at a time', async ({ page }) => {
     'aria-pressed',
     'true',
   )
-  await expect(cards(page)).toHaveCount(17)
+  await expect(cards(page)).toHaveCount(18)
 
   await kinds.getByRole('button', { name: 'Images' }).click()
   await expect(page.getByRole('heading', { level: 2 })).toHaveText(['Images'])
@@ -70,10 +70,17 @@ test('the kind buttons show one group at a time', async ({ page }) => {
     /^Resize images/,
     /^Compress images/,
   ])
+  // Mid-fade, the pressed button's colours fail contrast for a moment.
+  await page.evaluate(() => {
+    const { document } = globalThis as unknown as {
+      document: { getAnimations(): { finished: Promise<unknown> }[] }
+    }
+    return Promise.all(document.getAnimations().map((a) => a.finished))
+  })
   expect(await axeViolations(page)).toEqual([])
 
   await kinds.getByRole('button', { name: 'All' }).click()
-  await expect(cards(page)).toHaveCount(17)
+  await expect(cards(page)).toHaveCount(18)
 })
 
 test('searching narrows the list, best match first', async ({ page }) => {
@@ -155,7 +162,7 @@ test('a PDF chosen on the home page opens in the tool picked for it', async ({
 
   const heading = page.getByRole('heading', { name: 'Tools for statement.pdf' })
   await expect(heading).toBeFocused()
-  await expect(cards(page)).toHaveCount(9)
+  await expect(cards(page)).toHaveCount(10)
   await expect(cards(page).first()).toContainText('Merge PDFs')
   await expect(page.getByRole('searchbox')).toHaveCount(0)
   expect(await axeViolations(page)).toEqual([])
