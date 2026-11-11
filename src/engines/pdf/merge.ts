@@ -1,6 +1,7 @@
 import { PDFDocument } from '@cantoo/pdf-lib'
 import { PdfError, pdfErrorKind } from './errors'
 import { flattenForm } from './forms'
+import { attachLinks, detachLinks } from './links'
 import { loadPdf } from './load'
 import {
   keepOutline,
@@ -28,8 +29,15 @@ export async function mergePdfs(files: ArrayBuffer[]): Promise<Uint8Array> {
       const start = merged.getPageCount()
       outline.push(...moveOutline(readOutline(doc), (page) => start + page))
       show ||= opensWithOutline(doc)
+      const links = detachLinks(doc)
       const pages = await merged.copyPages(doc, doc.getPageIndices())
       for (const page of pages) merged.addPage(page)
+      attachLinks(
+        merged,
+        links,
+        pages.map((page, i) => [i, page]),
+        (page) => start + page,
+      )
     }
     keepOutline(merged, outline, show)
     merged.setCreator('Tuls')

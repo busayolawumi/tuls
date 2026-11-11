@@ -21,8 +21,10 @@ export type Bookmark = {
   children: Bookmark[]
 }
 
-type Target =
-  { page: number; fit: string; args: (number | null)[] } | { uri: string }
+/** A place in a PDF: a page (from 0), and how to show it. */
+export type PageTarget = { page: number; fit: string; args: (number | null)[] }
+
+type Target = PageTarget | { uri: string }
 
 const FITS = new Set([
   'XYZ',
@@ -85,22 +87,16 @@ function namedDestinations(doc: PDFDocument) {
 }
 
 /**
- * Reads a PDF's bookmarks (its outline). Bookmarks that go to a page or a
- * web address are kept; ones that run other actions keep only their title,
- * and are dropped if nothing under them is kept.
+ * Works out where a destination goes: an explicit one, or one named in the
+ * catalog. Undefined when it isn't a page of this PDF.
  */
-export function readOutline(doc: PDFDocument): Bookmark[] {
-  const { context, catalog } = doc
-  const root = catalog.lookupMaybe(name('Outlines'), PDFDict)
-  if (!root) return []
+export function destinationReader(doc: PDFDocument) {
+  const { context } = doc
   const pages = new Map(
     doc.getPages().map((page, i) => [page.ref.toString(), i]),
   )
   let named: Map<string, PDFObject> | undefined
-  const seen = new Set<PDFObject>()
-  let count = 0
-
-  const explicit = (value: PDFObject | undefined): Target | undefined => {
+  return (value: PDFObject | undefined): PageTarget | undefined => {
     let dest = value instanceof PDFRef ? context.lookup(value) : value
     if (
       dest instanceof PDFName ||
@@ -132,6 +128,29 @@ export function readOutline(doc: PDFDocument): Bookmark[] {
     }
     return { page, fit: fitName, args }
   }
+}
+
+/** An explicit destination array for a page of `doc`. */
+export function destinationArray(doc: PDFDocument, target: PageTarget) {
+  return doc.context.obj([
+    doc.getPage(target.page).ref,
+    name(target.fit),
+    ...target.args.map((arg) => (arg === null ? PDFNull : PDFNumber.of(arg))),
+  ])
+}
+
+/**
+ * Reads a PDF's bookmarks (its outline). Bookmarks that go to a page or a
+ * web address are kept; ones that run other actions keep only their title,
+ * and are dropped if nothing under them is kept.
+ */
+export function readOutline(doc: PDFDocument): Bookmark[] {
+  const { context, catalog } = doc
+  const root = catalog.lookupMaybe(name('Outlines'), PDFDict)
+  if (!root) return []
+  const explicit = destinationReader(doc)
+  const seen = new Set<PDFObject>()
+  let count = 0
 
   const targetOf = (item: PDFDict): Target | undefined => {
     const dest = item.get(name('Dest'))
@@ -238,16 +257,7 @@ export function writeOutline(doc: PDFDocument, items: Bookmark[]) {
       if (i < list.length - 1) dict.set(name('Next'), refs[i + 1])
       const { target } = item
       if (target && 'page' in target && pages[target.page]) {
-        dict.set(
-          name('Dest'),
-          context.obj([
-            pages[target.page].ref,
-            name(target.fit),
-            ...target.args.map((arg) =>
-              arg === null ? PDFNull : PDFNumber.of(arg),
-            ),
-          ]),
-        )
+        dict.set(name('Dest'), destinationArray(doc, target))
       } else if (target && 'uri' in target) {
         const action = context.obj({}) as PDFDict
         action.set(name('S'), name('URI'))

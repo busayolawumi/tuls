@@ -1,6 +1,7 @@
 import { PDFDocument, degrees } from '@cantoo/pdf-lib'
 import { PdfError, pdfErrorKind } from './errors'
 import { flattenForm } from './forms'
+import { attachLinks, detachLinks } from './links'
 import { loadPdf } from './load'
 import {
   keepOutline,
@@ -28,6 +29,7 @@ export async function organisePdf(
     if (plan.length === 0) throw new Error('No pages to keep')
     const source = await loadPdf(file)
     await flattenForm(source)
+    const links = detachLinks(source)
     const result = await PDFDocument.create()
     const pages = await result.copyPages(
       source,
@@ -42,6 +44,12 @@ export async function organisePdf(
     plan.forEach((page, i) => {
       if (!places.has(page.index)) places.set(page.index, i)
     })
+    attachLinks(
+      result,
+      links,
+      pages.map((page, i) => [plan[i].index, page]),
+      (page) => places.get(page),
+    )
     keepOutline(
       result,
       moveOutline(readOutline(source), (page) => places.get(page)),

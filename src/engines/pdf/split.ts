@@ -1,6 +1,7 @@
 import { PDFDocument } from '@cantoo/pdf-lib'
 import { PdfError, pdfErrorKind } from './errors'
 import { flattenForm } from './forms'
+import { attachLinks, detachLinks } from './links'
 import { loadPdf } from './load'
 import {
   keepOutline,
@@ -24,6 +25,7 @@ export async function splitPdf(
     const source = await loadPdf(file)
     await flattenForm(source)
     const outline = readOutline(source)
+    const links = detachLinks(source)
     const show = opensWithOutline(source)
     const files: Uint8Array<ArrayBuffer>[] = []
     for (const group of groups) {
@@ -31,6 +33,12 @@ export async function splitPdf(
       const pages = await result.copyPages(source, group)
       for (const page of pages) result.addPage(page)
       const places = new Map(group.map((page, i) => [page, i]))
+      attachLinks(
+        result,
+        links,
+        pages.map((page, i) => [group[i], page]),
+        (page) => places.get(page),
+      )
       keepOutline(
         result,
         moveOutline(outline, (page) => places.get(page)),
