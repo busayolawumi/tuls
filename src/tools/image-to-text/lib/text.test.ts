@@ -59,9 +59,9 @@ describe('confidentText', () => {
           [word('Hello', 96), word('Sn', 20), word('there', 90)],
           [word('3', 31)],
         ],
-        [[word('®', 67), word('BUSAYO', 56)], [word('CODES', 95)]],
+        [[word('®', 67), word('ANCHOR', 56)], [word('TOOLS', 95)]],
       ]),
-    ).toBe('Hello there\n\nBUSAYO\nCODES')
+    ).toBe('Hello there\n\nANCHOR\nTOOLS')
   })
 
   it('is empty when nothing is sure', () => {
@@ -78,9 +78,9 @@ describe('letterCount', () => {
 describe('sureScore', () => {
   it('prefers the read with more sure letters', () => {
     const word = (text: string, confidence: number) => ({ text, confidence })
-    const plain = sureScore([[[word('BUSAYOD', 56), word('ODES', 95)]]])
+    const plain = sureScore([[[word('ANCHORD', 56), word('OOLS', 95)]]])
     const clear = sureScore([
-      [[word('—', 46), word('BUSAYO', 75), word('CODES', 95)]],
+      [[word('—', 46), word('ANCHOR', 75), word('TOOLS', 95)]],
     ])
     expect(clear).toBeGreaterThan(plain)
   })
@@ -105,7 +105,7 @@ describe('isReliable', () => {
   })
 
   it('accepts real words, even from a hard logo', () => {
-    expect(isReliable([[[word('BUSAYO', 73), word('CODES', 95)]]])).toBe(true)
+    expect(isReliable([[[word('ANCHOR', 73), word('TOOLS', 95)]]])).toBe(true)
     expect(
       isReliable([[[word('Your', 96), word('transfer', 95), word('of', 93)]]]),
     ).toBe(true)

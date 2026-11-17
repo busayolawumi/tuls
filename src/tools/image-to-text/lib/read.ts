@@ -113,7 +113,11 @@ export async function readImage(
   try {
     let read = await readBest(reader, canvas)
     let turn = 0
-    if (read.confidence < TRY_TURNS || letterCount(read.text) === 0) {
+    if (
+      read.confidence < TRY_TURNS ||
+      letterCount(read.text) === 0 ||
+      !read.reliable
+    ) {
       const scale = Math.min(1, SMALL / Math.max(canvas.width, canvas.height))
       const scores: number[] = []
       for (const quarter of [0, 1, 2, 3]) {
@@ -131,7 +135,11 @@ export async function readImage(
         const upright = turned(canvas, turn)
         try {
           const again = await readBest(reader, upright)
-          if (letterCount(again.text) > letterCount(read.text)) read = again
+          const better =
+            again.reliable === read.reliable
+              ? letterCount(again.text) > letterCount(read.text)
+              : again.reliable
+          if (better) read = again
           else turn = 0
         } finally {
           free(upright)

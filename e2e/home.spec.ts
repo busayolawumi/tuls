@@ -43,7 +43,7 @@ test('the tools are grouped by kind', async ({ page }) => {
   const headings = page.getByRole('heading', { level: 2 })
   await expect(headings).toHaveText(['PDF', 'Documents', 'Images', 'Video'])
   const images = page.getByRole('region', { name: 'Images' })
-  await expect(images.getByRole('link')).toHaveCount(3)
+  await expect(images.getByRole('link')).toHaveCount(4)
   await expect(images.getByRole('link').first()).toContainText('Convert images')
 })
 
@@ -61,7 +61,7 @@ test('the kind buttons show one group at a time', async ({ page }) => {
     'aria-pressed',
     'true',
   )
-  await expect(cards(page)).toHaveCount(18)
+  await expect(cards(page)).toHaveCount(19)
 
   await kinds.getByRole('button', { name: 'Images' }).click()
   await expect(page.getByRole('heading', { level: 2 })).toHaveText(['Images'])
@@ -69,6 +69,7 @@ test('the kind buttons show one group at a time', async ({ page }) => {
     /^Convert imagesHEIC to JPG/,
     /^Resize images/,
     /^Compress images/,
+    /^Image to text/,
   ])
   // Mid-fade, the pressed button's colours fail contrast for a moment.
   await page.evaluate(() => {
@@ -80,7 +81,7 @@ test('the kind buttons show one group at a time', async ({ page }) => {
   expect(await axeViolations(page)).toEqual([])
 
   await kinds.getByRole('button', { name: 'All' }).click()
-  await expect(cards(page)).toHaveCount(18)
+  await expect(cards(page)).toHaveCount(19)
 })
 
 test('searching narrows the list, best match first', async ({ page }) => {
@@ -99,7 +100,7 @@ test('searching narrows the list, best match first', async ({ page }) => {
   await expect(cards(page).first()).toContainText('PDF to Word')
 
   await search.fill('heic')
-  await expect(page.getByRole('heading', { level: 2 })).toHaveText(['4 tools'])
+  await expect(page.getByRole('heading', { level: 2 })).toHaveText(['5 tools'])
 
   await search.fill('xyzzy')
   await expect(page.getByRole('heading', { level: 2 })).toHaveText([
